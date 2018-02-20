@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+    <Folder Include="Http\" />
+    <Folder Include="IO\" />
+    <Folder Include="Network\" />
+    <Folder Include="Result\" />
+    <Folder Include="Numeric\" />
+  </ItemGroup>
+
+</Project>
