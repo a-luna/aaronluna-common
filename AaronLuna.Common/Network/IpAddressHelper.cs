@@ -1,15 +1,37 @@
 ﻿namespace AaronLuna.Common.Network
 {
+    using Http;
     using Result;
+
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
     using System.Net.Sockets;
     using System.Text.RegularExpressions;
+    using System.Threading.Tasks;
 
     public static class IpAddressHelper
     {
-        public static List<IPAddress> GetAllLocalIpv4Addresses()
+        const string Pattern =
+            @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
+
+        public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
+        {
+            var getUrlResult = await HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/").ConfigureAwait(false);
+            if (getUrlResult.Failure)
+            {
+                return Result.Fail<IPAddress>(getUrlResult.Error);
+            }
+
+            var parse = ParseSingleIPv4Address(getUrlResult.Value);
+
+            return parse.Success 
+                ? Result.Ok(parse.Value) 
+                : Result.Fail<IPAddress>(parse.Error);
+        }
+
+        public static List<IPAddress> GetLocalIPv4AddressList()
         {
             var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
 
@@ -18,10 +40,9 @@
                     .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();
 
             return ips;
-
         }
 
-        public static IPAddress GetLocalIpV4Address()
+        public static IPAddress GetLocalIPv4Address()
         {
             var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
             var ipAddress = ipHostInfo.AddressList.Select(ip => ip)
@@ -30,53 +51,70 @@
             return ipAddress;
         }
 
-        public static Result<string> ParseSingleIPv4Address(string input)
+        public static Result<IPAddress> ParseSingleIPv4Address(string input)
         {
-            var parsedIpsResult = ParseAllIPv4Addresses(input);
-            if (parsedIpsResult.Failure)
+            if (string.IsNullOrEmpty(input))
             {
-                return Result.Fail<string>($"Unable tp parse IPv4 addressf rom input string: {parsedIpsResult.Error}");
+                return Result.Fail<IPAddress>("Input string cannot be null");
             }
 
-            var ips = parsedIpsResult.Value;
-            var firstIp = ips.FirstOrDefault();
+            var conversion = ConvertIPv4StringToBytes(input);
 
-            return Result.Ok(firstIp);
+            return conversion.Success
+                ? Result.Ok(new IPAddress(conversion.Value))
+                : Result.Fail<IPAddress>(conversion.Error);
         }
-
-        public static Result<List<string>> ParseAllIPv4Addresses(string input)
+        
+        public static Result<List<IPAddress>> ParseAllIPv4Addresses(string input)
         {
-            if (input == null)
+            if (string.IsNullOrEmpty(input))
             {
-                return Result.Fail<List<string>>("RegEx string cannot be null");
+                return Result.Fail<List<IPAddress>>("Input string cannot be null");
             }
 
-            const string pattern =
-                @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
-
-            var ips = new List<string>();
+            var ips = new List<IPAddress>();
             try
             {
-                var regex = new Regex(pattern);
+                var regex = new Regex(Pattern);
                 foreach (Match match in regex.Matches(input))
                 {
-                    ips.Add(match.Value);
+                    var parse = ParseSingleIPv4Address(match.Value);
+                    if (parse.Failure)
+                    {
+                        return Result.Fail<List<IPAddress>>(parse.Error);
+                    }
+                    
+                    ips.Add(parse.Value);
                 }
             }
             catch (RegexMatchTimeoutException ex)
             {
-                var exceptionType = ex.GetType();
-                var exceptionMessage = ex.Message;
-
-                return Result.Fail<List<string>>($"{exceptionMessage} ({exceptionType})");
+                return Result.Fail<List<IPAddress>>($"{ex.Message} ({ex.GetType()}) raised in method IpAddressHelper.ParseAllIPv4Addresses");
             }
 
-            if (ips.Count == 0)
+            return ips.Any() ? Result.Ok(ips) : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
+        }
+
+        private static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
+        {
+            var digits = ipv4.Trim().Split('.').ToList();
+            if (digits.Count != 4)
             {
-                return Result.Fail<List<string>>("Input string did not contain any valid IPv4 addreses");
+                return Result.Fail<byte[]>($"Unable to parse IPv4 address from string: {ipv4}");
             }
 
-            return Result.Ok(ips);
+            var bytes = new byte[4];
+            foreach (var i in Enumerable.Range(0, digits.Count))
+            {
+                if (!int.TryParse(digits[i], out int parsedInt))
+                {
+                    return Result.Fail<byte[]>($"Unable to parse IPv4 address from string: {ipv4}");
+                }
+
+                bytes[i] = (byte) parsedInt;
+            }
+
+            return Result.Ok(bytes);
         }
     }
 }
