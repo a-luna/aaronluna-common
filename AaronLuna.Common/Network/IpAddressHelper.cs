@@ -104,7 +104,7 @@
             var bytes = new byte[4];
             foreach (var i in Enumerable.Range(0, digits.Count))
             {
-                if (!int.TryParse(digits[i], out int parsedInt))
+                if (!int.TryParse(digits[i], out var parsedInt))
                 {
                     return Result.Fail<byte[]>($"Unable to parse IPv4 address from string: {ipv4}");
                 }

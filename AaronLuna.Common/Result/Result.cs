@@ -36,7 +36,7 @@
 
         public static Result Combine(params Result[] results)
         {
-            foreach (Result result in results)
+            foreach (var result in results)
             {
                 if (result.Failure)
                 {

@@ -26,7 +26,7 @@
 
         public static string ConvertListToString<T>(this List<T> list, string separator)
         {
-            string listStr = String.Empty;
+            var listStr = String.Empty;
             foreach (var i in Enumerable.Range(0, list.Count()))
             {
                 listStr += list[i].ToString();
@@ -48,21 +48,21 @@
         {
             if (input.Length != 8) return DateTime.MinValue;
 
-            string yearString = input.Substring(0, 4);
-            string monthString = input.Substring(4, 2);
-            string dayString = input.Substring(6, 2);
+            var yearString = input.Substring(0, 4);
+            var monthString = input.Substring(4, 2);
+            var dayString = input.Substring(6, 2);
 
             return ConvertThreeStringValuesToDateTime(yearString, monthString, dayString);
         }
 
         public static DateTime ToDateTimeFromFormat2(this string input)
         {
-            List<string> split = input.Split('/').ToList();
+            var split = input.Split('/').ToList();
             if (split.Count != 3) return DateTime.MinValue;
 
-            string monthString = split[0];
-            string dayString = split[1];
-            string yearString = split[2];
+            var monthString = split[0];
+            var dayString = split[1];
+            var yearString = split[2];
 
             return ConvertThreeStringValuesToDateTime(yearString, monthString, dayString);
         }
@@ -126,10 +126,10 @@
             }
 
             sanitizedHex = sanitizedHex.PadLeft(16, '0');
-            int numberChars = sanitizedHex.Length;
-            byte[] bytes = new byte[numberChars / 2];
+            var numberChars = sanitizedHex.Length;
+            var bytes = new byte[numberChars / 2];
 
-            for (int i = 0; i < numberChars; i += 2)
+            for (var i = 0; i < numberChars; i += 2)
             {
                 var currentByte = sanitizedHex.Substring(i, 2);
                 bytes[i / 2] = Convert.ToByte(currentByte, 16);
@@ -185,22 +185,22 @@
 
         private static DateTime ConvertThreeStringValuesToDateTime(string yearString, string monthString, string dayString)
         {
-            DateTime parsedDateTime = DateTime.MinValue;
+            var parsedDateTime = DateTime.MinValue;
 
             int parsedYear;
-            bool didParseYear = int.TryParse(yearString, out parsedYear);
+            var didParseYear = int.TryParse(yearString, out parsedYear);
 
             int parsedMonth;
-            bool didParseMonth = int.TryParse(monthString, out parsedMonth);
+            var didParseMonth = int.TryParse(monthString, out parsedMonth);
 
             int parsedDay;
-            bool didParseDay = int.TryParse(dayString, out parsedDay);
+            var didParseDay = int.TryParse(dayString, out parsedDay);
 
             if (!didParseYear || !didParseMonth || !didParseDay) return parsedDateTime;
 
-            bool yearIsValid = parsedYear >= 1 && parsedYear <= 9999;
-            bool monthIsValid = parsedMonth >= 1 && parsedMonth <= 12;
-            bool dayIsValid = parsedDay >= 1 && parsedDay <= 31;
+            var yearIsValid = parsedYear >= 1 && parsedYear <= 9999;
+            var monthIsValid = parsedMonth >= 1 && parsedMonth <= 12;
+            var dayIsValid = parsedDay >= 1 && parsedDay <= 31;
 
             if (!yearIsValid || !monthIsValid || !dayIsValid) return parsedDateTime;
 

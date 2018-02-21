@@ -6,7 +6,7 @@ namespace AaronLuna.Common.Extensions
     {
         public static DateTime StartOfWeek(this DateTime dt, DayOfWeek startOfWeek)
         {
-            int diff = dt.DayOfWeek - startOfWeek;
+            var diff = dt.DayOfWeek - startOfWeek;
             if (diff < 0)
             {
                 diff += 7;
