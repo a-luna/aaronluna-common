@@ -9,14 +9,21 @@
         public static async Task<Result<string>> GetUrlContentAsStringAsync(string url)
         {
             string urlContent;
-            using (var httpClient = new HttpClient())
-            using (var httpResonse = await httpClient.GetAsync(url).ConfigureAwait(false))
+            try
             {
-                urlContent = await httpResonse.Content.ReadAsStringAsync().ConfigureAwait(false);
-                if (string.IsNullOrEmpty(urlContent))
+                using (var httpClient = new HttpClient())
+                using (var httpResonse = await httpClient.GetAsync(url).ConfigureAwait(false))
                 {
-                    return Result.Fail<string>($"Unable to retrieve URL content ({url}), check internet connection");
+                    urlContent = await httpResonse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    if (string.IsNullOrEmpty(urlContent))
+                    {
+                        return Result.Fail<string>($"Unable to retrieve URL content ({url}), check internet connection");
+                    }
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result.Fail<string>($"{ex.Message} ({ex.GetType()})");
             }
 
             return Result.Ok(urlContent);
