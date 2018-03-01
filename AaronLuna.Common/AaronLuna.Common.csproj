@@ -8,7 +8,6 @@
     <Folder Include="Extensions\" />
     <Folder Include="Http\" />
     <Folder Include="IO\" />
-    <Folder Include="Network\" />
     <Folder Include="Result\" />
     <Folder Include="Numeric\" />
   </ItemGroup>

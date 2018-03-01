@@ -1,5 +1,8 @@
-﻿namespace AaronLuna.Common.Network
+﻿using System;
+
+namespace AaronLuna.Common.Network
 {
+    using Enums;
     using Http;
     using Result;
     using System.Collections.Generic;
@@ -11,9 +14,13 @@
 
     public static class IpAddressHelper
     {
+        public const string CidrBlockClassA = "10.0.0.0/8";
+        public const string CidrBlockClassB = "172.16.0.0/12";
+        public const string CidrBlockClassC = "192.168.0.0/16";
+
         const string Pattern =
             @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
-
+        
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
             var getUrlResult = await HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/").ConfigureAwait(false);
@@ -91,6 +98,73 @@
             }
 
             return ips.Any() ? Result.Ok(ips) : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
+        }
+
+        public static IpAddressSimilarity CompareTwoIpAddresses(IPAddress ip1, IPAddress ip2)
+        {
+            var ip1Bytes = ip1.GetAddressBytes();
+            var ip2Bytes = ip2.GetAddressBytes();    
+
+            if (ip1Bytes[0] != ip2Bytes[0]) return IpAddressSimilarity.None;
+            if (ip1Bytes[1] != ip2Bytes[1]) return IpAddressSimilarity.OnlyFirstByteMatches;
+            if (ip1Bytes[2] != ip2Bytes[2]) return IpAddressSimilarity.FirstTwoBytesMatch;
+
+            return ip1Bytes[3] != ip2Bytes[3] 
+                ? IpAddressSimilarity.FirstThreeBytesMatch 
+                : IpAddressSimilarity.AllBytesMatch;
+        }
+
+        // true if ipAddress falls inside the CIDR range, example
+        // bool result = IsInRange("192.168.2.3", ""192.168.2.0");
+        public static Result<bool> IsInCidrRange(string ipAddress, string CIDRmask)
+        {
+            if (string.IsNullOrEmpty(ipAddress))
+            {
+                return Result.Fail<bool>($"IP address was null or empty string, {ipAddress}");
+            }
+
+            if (string.IsNullOrEmpty(CIDRmask))
+            {
+                return Result.Fail<bool>($"CIDR mask was null or empty string, {CIDRmask}");
+            }
+
+            var parts = CIDRmask.Split('/');
+            if (parts.Length != 2)
+            {
+                return Result.Fail<bool>(
+                    $"CIDRmask was not in the correct format:\nExpected: a.b.c.d/n\nActual: {CIDRmask}");
+            }
+
+            bool ipIsInRange;
+            try
+            {
+                var IP_addr = BitConverter.ToInt32(IPAddress.Parse(parts[0]).GetAddressBytes(), 0);
+                var CIDR_addr = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
+                var CIDR_mask = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(parts[1])));
+
+                ipIsInRange = ((IP_addr & CIDR_mask) == (CIDR_addr & CIDR_mask));
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail<bool>($"{ex.Message} ({ex.GetType()})");
+            }
+            
+            return Result.Ok(ipIsInRange);
+        }
+
+        public static bool IsLocalIpAddress(string ipAddress)
+        {
+            var parse = ParseSingleIPv4Address(ipAddress);
+            if (parse.Failure)
+            {
+                return false;
+            }
+
+            var checkRangeA = IsInCidrRange(ipAddress, CidrBlockClassA);
+            var checkRangeB = IsInCidrRange(ipAddress, CidrBlockClassB);
+            var checkRangeC = IsInCidrRange(ipAddress, CidrBlockClassC);
+
+            return checkRangeA.Value || checkRangeB.Value || checkRangeC.Value;
         }
 
         private static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
