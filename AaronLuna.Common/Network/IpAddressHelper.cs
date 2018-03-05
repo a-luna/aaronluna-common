@@ -20,7 +20,7 @@ namespace AaronLuna.Common.Network
 
         const string Pattern =
             @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
-        
+
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
             var getUrlResult = await HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/").ConfigureAwait(false);
@@ -47,13 +47,24 @@ namespace AaronLuna.Common.Network
             return ips;
         }
 
-        public static IPAddress GetLocalIPv4Address()
+        public static Result<IPAddress> GetLocalIPv4AddressWithInternet()
         {
-            var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-            var ipAddress = ipHostInfo.AddressList.Select(ip => ip)
-                .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            IPAddress localIp;
+            try
+            {
+                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+                {
+                    socket.Connect("8.8.8.8", 65530);
+                    IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                    localIp = endPoint.Address;
+                }
+            }
+            catch (SocketException ex)
+            {
+                return Result.Fail<IPAddress>($"{ex.Message} {ex.GetType()}");
+            }
 
-            return ipAddress;
+            return Result.Ok(localIp);
         }
 
         public static Result<IPAddress> ParseSingleIPv4Address(string input)
@@ -135,12 +146,15 @@ namespace AaronLuna.Common.Network
                     $"CIDRmask was not in the correct format:\nExpected: a.b.c.d/n\nActual: {CIDRmask}");
             }
 
+            var cidrAddress = parts[0];
+            var cidrNetworkBitCount = parts[1];
             bool ipIsInRange;
+
             try
             {
-                var IP_addr = BitConverter.ToInt32(IPAddress.Parse(parts[0]).GetAddressBytes(), 0);
+                var IP_addr = BitConverter.ToInt32(IPAddress.Parse(cidrAddress).GetAddressBytes(), 0);
                 var CIDR_addr = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
-                var CIDR_mask = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(parts[1])));
+                var CIDR_mask = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(cidrNetworkBitCount)));
 
                 ipIsInRange = ((IP_addr & CIDR_mask) == (CIDR_addr & CIDR_mask));
             }
