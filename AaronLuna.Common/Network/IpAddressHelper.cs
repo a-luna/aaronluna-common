@@ -126,24 +126,24 @@ namespace AaronLuna.Common.Network
         }
 
         // true if ipAddress falls inside the CIDR range, example
-        // bool result = IsInRange("192.168.2.3", ""192.168.2.0");
-        public static Result<bool> IsInCidrRange(string ipAddress, string CIDRmask)
+        // bool result = IsInCidrRange("192.168.2.3", "192.168.2.0/24");
+        public static Result<bool> IsInCidrRange(string ipAddress, string cidrMask)
         {
             if (string.IsNullOrEmpty(ipAddress))
             {
                 return Result.Fail<bool>($"IP address was null or empty string, {ipAddress}");
             }
 
-            if (string.IsNullOrEmpty(CIDRmask))
+            if (string.IsNullOrEmpty(cidrMask))
             {
-                return Result.Fail<bool>($"CIDR mask was null or empty string, {CIDRmask}");
+                return Result.Fail<bool>($"CIDR mask was null or empty string, {cidrMask}");
             }
 
-            var parts = CIDRmask.Split('/');
+            var parts = cidrMask.Split('/');
             if (parts.Length != 2)
             {
                 return Result.Fail<bool>(
-                    $"CIDRmask was not in the correct format:\nExpected: a.b.c.d/n\nActual: {CIDRmask}");
+                    $"cidrMask was not in the correct format:\nExpected: a.b.c.d/n\nActual: {cidrMask}");
             }
 
             var cidrAddress = parts[0];
