@@ -1,10 +1,10 @@
-﻿using System;
-
-namespace AaronLuna.Common.Network
+﻿namespace AaronLuna.Common.Network
 {
     using Enums;
     using Http;
     using Result;
+
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
@@ -12,11 +12,11 @@ namespace AaronLuna.Common.Network
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
-    public static class IpAddressHelper
+    public static class Network
     {
-        public const string CidrBlockClassA = "10.0.0.0/8";
-        public const string CidrBlockClassB = "172.16.0.0/12";
-        public const string CidrBlockClassC = "192.168.0.0/16";
+        public const string CidPrivateBlockClassA = "10.0.0.0/8";
+        public const string CidrPrivateBlockClassB = "172.16.0.0/12";
+        public const string CidrPrivateBlockClassC = "192.168.0.0/16";
 
         const string Pattern =
             @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
@@ -31,8 +31,8 @@ namespace AaronLuna.Common.Network
 
             var parse = ParseSingleIPv4Address(getUrlResult.Value);
 
-            return parse.Success 
-                ? Result.Ok(parse.Value) 
+            return parse.Success
+                ? Result.Ok(parse.Value)
                 : Result.Fail<IPAddress>(parse.Error);
         }
 
@@ -47,7 +47,7 @@ namespace AaronLuna.Common.Network
             return ips;
         }
 
-        public static Result<IPAddress> GetLocalIPv4AddressWithInternet()
+        public static Result<IPAddress> GetLocalIPv4AddressFromInternet()
         {
             IPAddress localIp;
             try
@@ -80,7 +80,7 @@ namespace AaronLuna.Common.Network
                 ? Result.Ok(new IPAddress(conversion.Value))
                 : Result.Fail<IPAddress>(conversion.Error);
         }
-        
+
         public static Result<List<IPAddress>> ParseAllIPv4Addresses(string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -99,7 +99,7 @@ namespace AaronLuna.Common.Network
                     {
                         return Result.Fail<List<IPAddress>>(parse.Error);
                     }
-                    
+
                     ips.Add(parse.Value);
                 }
             }
@@ -114,20 +114,20 @@ namespace AaronLuna.Common.Network
         public static IpAddressSimilarity CompareTwoIpAddresses(IPAddress ip1, IPAddress ip2)
         {
             var ip1Bytes = ip1.GetAddressBytes();
-            var ip2Bytes = ip2.GetAddressBytes();    
+            var ip2Bytes = ip2.GetAddressBytes();
 
             if (ip1Bytes[0] != ip2Bytes[0]) return IpAddressSimilarity.None;
             if (ip1Bytes[1] != ip2Bytes[1]) return IpAddressSimilarity.OnlyFirstByteMatches;
             if (ip1Bytes[2] != ip2Bytes[2]) return IpAddressSimilarity.FirstTwoBytesMatch;
 
-            return ip1Bytes[3] != ip2Bytes[3] 
-                ? IpAddressSimilarity.FirstThreeBytesMatch 
+            return ip1Bytes[3] != ip2Bytes[3]
+                ? IpAddressSimilarity.FirstThreeBytesMatch
                 : IpAddressSimilarity.AllBytesMatch;
         }
 
         // true if ipAddress falls inside the CIDR range, example
         // bool result = IsInCidrRange("192.168.2.3", "192.168.2.0/24");
-        public static Result<bool> IsInCidrRange(string ipAddress, string cidrMask)
+        public static Result<bool> IpAddressIsInCidrRange(string ipAddress, string cidrMask)
         {
             if (string.IsNullOrEmpty(ipAddress))
             {
@@ -162,11 +162,11 @@ namespace AaronLuna.Common.Network
             {
                 return Result.Fail<bool>($"{ex.Message} ({ex.GetType()})");
             }
-            
+
             return Result.Ok(ipIsInRange);
         }
 
-        public static bool IsLocalIpAddress(string ipAddress)
+        public static bool IpAddressIsInPrivateAddressSpace(string ipAddress)
         {
             var parse = ParseSingleIPv4Address(ipAddress);
             if (parse.Failure)
@@ -174,9 +174,9 @@ namespace AaronLuna.Common.Network
                 return false;
             }
 
-            var checkRangeA = IsInCidrRange(ipAddress, CidrBlockClassA);
-            var checkRangeB = IsInCidrRange(ipAddress, CidrBlockClassB);
-            var checkRangeC = IsInCidrRange(ipAddress, CidrBlockClassC);
+            var checkRangeA = IpAddressIsInCidrRange(ipAddress, CidPrivateBlockClassA);
+            var checkRangeB = IpAddressIsInCidrRange(ipAddress, CidrPrivateBlockClassB);
+            var checkRangeC = IpAddressIsInCidrRange(ipAddress, CidrPrivateBlockClassC);
 
             return checkRangeA.Value || checkRangeB.Value || checkRangeC.Value;
         }

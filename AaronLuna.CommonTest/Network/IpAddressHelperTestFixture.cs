@@ -14,7 +14,7 @@
         public void ParseValidString()
         {
             var input = "192.168.2.9";
-            var result = IpAddressHelper.ParseAllIPv4Addresses(input);
+            var result = Network.ParseAllIPv4Addresses(input);
             var parsedIps = result.Value;
 
             Assert.IsTrue(result.Success);

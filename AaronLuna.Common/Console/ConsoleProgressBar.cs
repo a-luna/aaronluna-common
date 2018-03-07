@@ -110,7 +110,7 @@ namespace AaronLuna.Common.Console
                 animation = ' ';
             }
 
-            return $"{progressBar} {percent}% {bytesReceived} of {fileSizeInBytes}";            
+            return $"{progressBar} {percent}% {bytesReceived} of {fileSizeInBytes} {animation}";
         }
 
         private void UpdateText(string text)
