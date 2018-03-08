@@ -18,7 +18,7 @@
         public const string CidrPrivateBlockClassB = "172.16.0.0/12";
         public const string CidrPrivateBlockClassC = "192.168.0.0/16";
 
-        const string Pattern =
+        private const string Pattern =
             @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
@@ -108,7 +108,7 @@
                 return Result.Fail<List<IPAddress>>($"{ex.Message} ({ex.GetType()}) raised in method IpAddressHelper.ParseAllIPv4Addresses");
             }
 
-            return ips.Any() ? Result.Ok(ips) : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
+            return ips.Count > 0 ? Result.Ok(ips) : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
         }
 
         public static IpAddressSimilarity CompareTwoIpAddresses(IPAddress ip1, IPAddress ip2)

@@ -9,8 +9,8 @@ namespace AaronLuna.Common.Console
         [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
         private static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
 
-        const int VK_RETURN = 0x0D;
-        const int WM_KEYDOWN = 0x100;
+        private const int VK_RETURN = 0x0D;
+        private const int WM_KEYDOWN = 0x100;
 
         public static void Execute()
         {

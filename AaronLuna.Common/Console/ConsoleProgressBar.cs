@@ -22,13 +22,13 @@ namespace AaronLuna.Common.Console
         public static string ExplodingAnimation = ".oO@*";
         public static string DefaultSpinnerAnimation = @"|/-\-";
 
-        readonly TimeSpan _animationInterval = TimeSpan.FromSeconds(1.0 / 8);
+        private readonly TimeSpan _animationInterval = TimeSpan.FromSeconds(1.0 / 8);
 
-        Timer _timer;
-        double _currentProgress;
-        string _currentText = string.Empty;
-        bool _disposed;
-        int _animationIndex;
+        private Timer _timer;
+        private double _currentProgress;
+        private string _currentText = string.Empty;
+        private bool _disposed;
+        private int _animationIndex;
 
         public ConsoleProgressBar()
         {
@@ -47,7 +47,7 @@ namespace AaronLuna.Common.Console
         public string EndBracket { get; set; }
         public string CompletedBlock { get; set; }
         public string UncompletedBlock { get; set; }
-        public string AnimationSequence { get; set; }        
+        public string AnimationSequence { get; set; }
         public long BytesReceived { get; set; }
         public long FileSizeInBytes { get; set; }
 
@@ -97,7 +97,7 @@ namespace AaronLuna.Common.Console
             foreach (var i in Enumerable.Range(0, NumberOfBlocks - numBlocksCompleted))
             {
                 uncompletedBlocks += UncompletedBlock;
-            }            
+            }
 
             var progressBar = $"{StartBracket}{completedBlocks}{uncompletedBlocks}{EndBracket}";
             var percent = (int)(currentProgress * 100);

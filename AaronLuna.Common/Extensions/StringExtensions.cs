@@ -89,7 +89,7 @@
             }
 
             var bytes = StringToByteArray(hexString).ToList();
-            if (bytes.Any())
+            if (bytes.Count > 0)
             {
                 var mostSignificantByte = Convert.ToString(bytes[0], 2);
 
@@ -107,7 +107,7 @@
             }
 
             var bytes = StringToByteArray(hexString).ToList();
-            if (bytes.Any())
+            if (bytes.Count > 0)
             {
                 var mostSignificantByte = Convert.ToString(bytes[0], 2);
 
@@ -144,7 +144,7 @@
             var inputChars = input.Distinct().ToList();
             var invalidChars = inputChars.Select(ch => ch).Where(ch => !hexChars.Contains(ch)).ToList();
 
-            return !invalidChars.Any();
+            return invalidChars.Count == 0;
         }
         
         public static bool ContainsOnlyAlphabeticCharacters(this string input)
@@ -154,7 +154,7 @@
             var invalidCharacters =
                 inputCharacters.Select(ch => ch).Where(ch => !alphabeticCharacters.Contains(ch)).ToList();
 
-            return !invalidCharacters.Any();
+            return invalidCharacters.Count == 0;
         }
 
         public static bool ContainsOnlyAlphanumericCharacters(this string input)
@@ -164,7 +164,7 @@
             var invalidCharacters =
                 inputCharacters.Select(ch => ch).Where(ch => !alphanumericCharacters.Contains(ch)).ToList();
 
-            return !invalidCharacters.Any();
+            return invalidCharacters.Count == 0;
         }
 
         public static bool IsValidFileName(this string fileName)
@@ -174,7 +174,7 @@
             var invalidCharacters =
                 inputCharacters.Select(ch => ch).Where(ch => !allowedChars.Contains(ch)).ToList();
 
-            return !invalidCharacters.Any();
+            return invalidCharacters.Count == 0;
         }
 
         public static List<string> SplitStringOnChar(this string s, char splitter)
