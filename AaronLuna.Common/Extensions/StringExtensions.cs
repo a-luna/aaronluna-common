@@ -6,10 +6,10 @@
 
     public static class StringExtensions
     {
-        private const string HexadecimalDigits = "0123456789ABCDEFXabcdefx";
-        private const string AlphabeticCharacterSet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private const string AlphanumericCharacterSet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        private const string CharsAllowedInFileNames = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-";
+        const string HexadecimalDigits = "0123456789ABCDEFXabcdefx";
+        const string AlphabeticCharacterSet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string AlphanumericCharacterSet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        const string CharsAllowedInFileNames = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-";
 
         public static List<string> Clone(this List<string> list)
         {
@@ -27,11 +27,11 @@
         public static string ConvertListToString<T>(this List<T> list, string separator)
         {
             var listStr = String.Empty;
-            foreach (var i in Enumerable.Range(0, list.Count()))
+            foreach (var i in Enumerable.Range(0, list.Count))
             {
                 listStr += list[i].ToString();
 
-                if (i < list.Count() - 1)
+                if (i < list.Count - 1)
                 {
                     listStr += separator;
                 }
@@ -44,6 +44,7 @@
         {
             return ConvertListToString(list, ",");
         }
+
         public static DateTime ToDateTimeFromFormat1(this string input)
         {
             if (input.Length != 8) return DateTime.MinValue;
@@ -117,7 +118,7 @@
             return false;
         }
 
-        private static byte[] StringToByteArray(string hexString)
+        static byte[] StringToByteArray(string hexString)
         {
             var sanitizedHex = hexString;
             if (hexString.StartsWith("0x", StringComparison.InvariantCulture))
@@ -146,7 +147,7 @@
 
             return invalidChars.Count == 0;
         }
-        
+
         public static bool ContainsOnlyAlphabeticCharacters(this string input)
         {
             var alphabeticCharacters = AlphabeticCharacterSet.ToCharArray().ToList();
@@ -183,27 +184,21 @@
             return Enumerable.Range(0, split.Length).Select(i => split[i]).ToList();
         }
 
-        private static DateTime ConvertThreeStringValuesToDateTime(string yearString, string monthString, string dayString)
+        static DateTime ConvertThreeStringValuesToDateTime(string yearString, string monthString, string dayString)
         {
-            var parsedDateTime = DateTime.MinValue;
+            var didParseYear = int.TryParse(yearString, out var parsedYear);
+            var didParseMonth = int.TryParse(monthString, out var parsedMonth);
+            var didParseDay = int.TryParse(dayString, out var parsedDay);
 
-            int parsedYear;
-            var didParseYear = int.TryParse(yearString, out parsedYear);
-
-            int parsedMonth;
-            var didParseMonth = int.TryParse(monthString, out parsedMonth);
-
-            int parsedDay;
-            var didParseDay = int.TryParse(dayString, out parsedDay);
-
-            if (!didParseYear || !didParseMonth || !didParseDay) return parsedDateTime;
+            if (!didParseYear || !didParseMonth || !didParseDay) return DateTime.MinValue;
 
             var yearIsValid = parsedYear >= 1 && parsedYear <= 9999;
             var monthIsValid = parsedMonth >= 1 && parsedMonth <= 12;
             var dayIsValid = parsedDay >= 1 && parsedDay <= 31;
 
-            if (!yearIsValid || !monthIsValid || !dayIsValid) return parsedDateTime;
+            if (!yearIsValid || !monthIsValid || !dayIsValid) return DateTime.MinValue;
 
+            var parsedDateTime = DateTime.MinValue;
             try
             {
                 parsedDateTime = new DateTime(parsedYear, parsedMonth, parsedDay);

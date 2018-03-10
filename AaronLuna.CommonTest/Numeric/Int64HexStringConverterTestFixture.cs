@@ -1,6 +1,6 @@
 ﻿namespace AaronLuna.CommonTest.Numeric
 {
-    using AaronLuna.Common.Numeric;
+    using Common.Numeric;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -68,7 +68,7 @@
         [TestMethod]
         public void VerifyUInt64GreaterThanInt64MaxValue()
         {
-            var sourceNumber = (ulong)long.MaxValue + 256;
+            const ulong sourceNumber = (ulong)long.MaxValue + 256;
 
             var hexString1 = new Int64HexStringConverter($"{sourceNumber:X}", false);
             var convertResult1 = hexString1.ConvertToSignedInt64();
@@ -90,7 +90,7 @@
         [TestMethod]
         public void VerifyNegativeOne()
         {
-            long sourceNumber = -1;
+            const long sourceNumber = -1;
 
             var hexString1 = new Int64HexStringConverter($"{sourceNumber:X}", true);
             var convertResult1 = hexString1.ConvertToSignedInt64();
@@ -112,7 +112,7 @@
         [TestMethod]
         public void VerifyMultipleStrings()
         {
-            var sourceNumber1 = 2608;
+            const int sourceNumber1 = 2608;
             var hexString1 = new Int64HexStringConverter($"{sourceNumber1:X}", true);
             var hexString1A = new Int64HexStringConverter($"0x{sourceNumber1:X}", true);
 
@@ -134,10 +134,10 @@
             Assert.IsTrue(parseResults1aU.Success);
             Assert.AreEqual((ulong) 2608, parseResults1aU.Value);
 
-            var sourceNumber2 = 13;
+            const int sourceNumber2 = 13;
             var hexString2 = new Int64HexStringConverter($"{sourceNumber2:X}", true);
             var hexString2A = new Int64HexStringConverter($"0x{sourceNumber2:X}", true);
-            
+
             var parseResults2 = hexString2.ConvertToSignedInt64();
             var parseResults2A = hexString2A.ConvertToSignedInt64();
 
@@ -163,7 +163,7 @@
             Assert.IsTrue(parseResults3.Failure);
             Assert.IsTrue(parseResults3U.Failure);
 
-            var hexString4 = new Int64HexStringConverter("GAD", true);           
+            var hexString4 = new Int64HexStringConverter("GAD", true);
             var parseResults4 = hexString4.ConvertToSignedInt64();
             var parseResults4U = hexString4.ConvertToUnsignedInt64();
 

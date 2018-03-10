@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using AaronLuna.Common.Numeric;
+using AaronLuna.Common.IO;
 
 namespace AaronLuna.Common.Console
 {
@@ -22,13 +22,13 @@ namespace AaronLuna.Common.Console
         public static string ExplodingAnimation = ".oO@*";
         public static string DefaultSpinnerAnimation = @"|/-\-";
 
-        private readonly TimeSpan _animationInterval = TimeSpan.FromSeconds(1.0 / 8);
+        readonly TimeSpan _animationInterval = TimeSpan.FromSeconds(1.0 / 8);
 
-        private Timer _timer;
-        private double _currentProgress;
-        private string _currentText = string.Empty;
-        private bool _disposed;
-        private int _animationIndex;
+        Timer _timer;
+        double _currentProgress;
+        string _currentText = string.Empty;
+        bool _disposed;
+        int _animationIndex;
 
         public ConsoleProgressBar()
         {
@@ -58,7 +58,7 @@ namespace AaronLuna.Common.Console
             Interlocked.Exchange(ref _currentProgress, value);
         }
 
-        private void Initialize()
+        void Initialize()
         {
             _timer = new Timer(TimerHandler);
 
@@ -71,7 +71,7 @@ namespace AaronLuna.Common.Console
             }
         }
 
-        private void TimerHandler(object state)
+        void TimerHandler(object state)
         {
             lock (_timer)
             {
@@ -83,7 +83,7 @@ namespace AaronLuna.Common.Console
             }
         }
 
-        private string GetProgressBarText(double currentProgress)
+        string GetProgressBarText(double currentProgress)
         {
             var numBlocksCompleted = (int)(currentProgress * NumberOfBlocks);
 
@@ -101,8 +101,8 @@ namespace AaronLuna.Common.Console
 
             var progressBar = $"{StartBracket}{completedBlocks}{uncompletedBlocks}{EndBracket}";
             var percent = (int)(currentProgress * 100);
-            var bytesReceived = BytesReceived.ConvertBytesForDisplay();
-            var fileSizeInBytes = FileSizeInBytes.ConvertBytesForDisplay();
+            var bytesReceived = FileHelper.FileSizeToString(BytesReceived);
+            var fileSizeInBytes = FileHelper.FileSizeToString(FileSizeInBytes);
             var animation = AnimationSequence[_animationIndex++ % AnimationSequence.Length];
 
             if (currentProgress is 1)
@@ -113,7 +113,7 @@ namespace AaronLuna.Common.Console
             return $"{progressBar} {percent}% {bytesReceived} of {fileSizeInBytes} {animation}";
         }
 
-        private void UpdateText(string text)
+        void UpdateText(string text)
         {
             // Get length of common portion
             var commonPrefixLength = 0;
@@ -143,18 +143,26 @@ namespace AaronLuna.Common.Console
             _currentText = text;
         }
 
-        private void ResetTimer()
+        void ResetTimer()
         {
             _timer.Change(_animationInterval, TimeSpan.FromMilliseconds(-1));
         }
 
-        public void Dispose()
+        protected virtual void Dispose(bool disposing)
         {
+            if (!disposing) return;
+
             lock (_timer)
             {
                 _disposed = true;
                 UpdateText(GetProgressBarText(1));
             }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

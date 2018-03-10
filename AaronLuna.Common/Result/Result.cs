@@ -50,11 +50,10 @@
 
     public class Result<T> : Result
     {
-
         protected internal Result(T value, bool success, string error)
             : base(success, error)
         {
-            this.Value = value;
+            Value = value;
         }
 
         public T Value { get; }

@@ -9,6 +9,6 @@
 
         public override ErrorType Type => ErrorType.Simple;
 
-        public string Message { get; }        
+        public string Message { get; }
     }
 }

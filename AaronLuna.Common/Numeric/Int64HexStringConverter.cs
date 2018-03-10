@@ -3,24 +3,23 @@
     using System;
     using System.Globalization;
 
-    using AaronLuna.Common.Extensions;
-    using AaronLuna.Common.Result;
+    using Extensions;
+    using Result;
 
     public struct Int64HexStringConverter
     {
+        readonly string _hexString;
+        readonly bool _isNegativeNumber;
+
         public Int64HexStringConverter(string hexString, bool isSignedType)
         {
-            HexString = hexString;
-            IsNegativeNumber = isSignedType && hexString.HexStringRepresentsNegativeNumber();
+            _hexString = hexString;
+            _isNegativeNumber = isSignedType && hexString.HexStringRepresentsNegativeNumber();
         }
-
-        public string HexString { get; set; }
-
-        public bool IsNegativeNumber { get; set; }
 
         public Result<long> ConvertToSignedInt64()
         {
-            if (string.IsNullOrEmpty(HexString))
+            if (string.IsNullOrEmpty(_hexString))
             {
                 return Result.Fail<long>("Input string was null or empty. (ArgumentNullException)");
             }
@@ -29,15 +28,15 @@
             // "style" parameter in TryParse call is hardcoded to a valid NumberStyles 
             // value, thus there is no reason to check for the conditions that would 
             // throw an ArgumentException.
-            if (long.TryParse(HexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var signedInt64))
+            if (long.TryParse(_hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var signedInt64))
             {
                 try
                 {
                     // Throw an exception if the hexstring represents a positive value but
                     // the parsed value is interpereted as negative
-                    if (!IsNegativeNumber && signedInt64.ToString("X").HexStringRepresentsNegativeNumber())
+                    if (!_isNegativeNumber && signedInt64.ToString("X").HexStringRepresentsNegativeNumber())
                     {
-                        throw new OverflowException($"{HexString} cannot be converted to Int64");
+                        throw new OverflowException($"{_hexString} cannot be converted to Int64");
                     }
 
                     return Result.Ok(signedInt64);
@@ -62,7 +61,7 @@
             // "StringComparison" paremeter in the StartsWith() method call is
             // hardcoded to a valid StringComparison value, so there is no need to 
             // check for the condition that would throw an ArgumentException.
-            if (HexString.StartsWith("-", StringComparison.InvariantCulture))
+            if (_hexString.StartsWith("-", StringComparison.InvariantCulture))
             {
                 return Result.Fail<long>("Input string cannot contain a minus sign if the base is not 10. (ArgumentException)");
             }
@@ -70,13 +69,13 @@
             try
             {
                 // Convert the string to an Int64
-                signedInt64 = Convert.ToInt64(this.HexString, 16);
+                signedInt64 = Convert.ToInt64(_hexString, 16);
 
                 // Throw an exception if the hexstring represents a positive value but
                 // the parsed value is interpereted as negative
-                if (!IsNegativeNumber && signedInt64.ToString("X").HexStringRepresentsNegativeNumber())
+                if (!_isNegativeNumber && signedInt64.ToString("X").HexStringRepresentsNegativeNumber())
                 {
-                    throw new OverflowException($"{this.HexString} cannot be converted to Int64");
+                    throw new OverflowException($"{_hexString} cannot be converted to Int64");
                 }
 
                 return Result.Ok(signedInt64);
@@ -99,7 +98,7 @@
 
         public Result<ulong> ConvertToUnsignedInt64()
         {
-            if (string.IsNullOrEmpty(HexString))
+            if (string.IsNullOrEmpty(_hexString))
             {
                 return Result.Fail<ulong>("Input string was null or empty. (ArgumentNullException)");
             }
@@ -108,16 +107,16 @@
             // "style" parameter in TryParse call is hardcoded to a valid NumberStyles 
             // value, thus there is no reason to check for the conditions that would 
             // throw an ArgumentException.
-            if (ulong.TryParse(HexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var unsignedInt64))
+            if (ulong.TryParse(_hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var unsignedInt64))
             {
                 try
                 {
                     // Throw an exception if the hexstring represents a negative value but
                     // the parsed value is interpereted as positive
-                    if (IsNegativeNumber)
+                    if (_isNegativeNumber)
                     {
                         throw new OverflowException(
-                            $"{HexString} cannot be converted to UInt64. Converted value of {unsignedInt64:N0} is positive and hex string repsresents a negative number.");
+                            $"{_hexString} cannot be converted to UInt64. Converted value of {unsignedInt64:N0} is positive and hex string repsresents a negative number.");
                     }
 
                     return Result.Ok(unsignedInt64);
@@ -142,7 +141,7 @@
             // "StringComparison" paremeter in the StartsWith() method call is
             // hardcoded to a valid StringComparison value, so there is no need to 
             // check for the condition that would throw an ArgumentException.
-            if (HexString.StartsWith("-", StringComparison.InvariantCulture))
+            if (_hexString.StartsWith("-", StringComparison.InvariantCulture))
             {
                 return Result.Fail<ulong>("Input string cannot contain a minus sign if the base is not 10. (ArgumentException)");
             }
@@ -150,31 +149,25 @@
             try
             {
                 // Convert the string to an Int64
-                unsignedInt64 = Convert.ToUInt64(HexString, 16);
+                unsignedInt64 = Convert.ToUInt64(_hexString, 16);
 
                 // Throw an exception if the hexstring represents a negative value but
                 // the parsed value is interpereted as positive
-                if (IsNegativeNumber)
+                if (_isNegativeNumber)
                 {
-                    throw new OverflowException($"{HexString} cannot be converted to UInt64. Converted value of "
+                    throw new OverflowException($"{_hexString} cannot be converted to UInt64. Converted value of "
                                                 + $"{unsignedInt64:N0} is positive and hex string repsresents a negative number.");
                 }
 
                 return Result.Ok(unsignedInt64);
             }
-            catch (FormatException formatException)
+            catch (FormatException ex)
             {
-                var exceptionType = formatException.GetType();
-                var exceptionMessage = formatException.Message;
-
-                return Result.Fail<ulong>($"{exceptionMessage} ({exceptionType})");
+                return Result.Fail<ulong>($"{ex.Message} ({ex.GetType()})");
             }
-            catch (OverflowException overflowException)
+            catch (OverflowException ex)
             {
-                var exceptionType = overflowException.GetType();
-                var exceptionMessage = overflowException.Message;
-
-                return Result.Fail<ulong>($"{exceptionMessage} ({exceptionType})");
+                return Result.Fail<ulong>($"{ex.Message} ({ex.GetType()})");
             }
         }
     }

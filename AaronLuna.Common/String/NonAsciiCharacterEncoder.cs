@@ -8,13 +8,13 @@
     {
         public static string EncodeNonAsciiCharacters(string value)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (char c in value)
+            var sb = new StringBuilder();
+            foreach (var c in value)
             {
                 if (c > 127)
                 {
                     // This character is too big for ASCII
-                    string encodedValue = "\\u" + ((int) c).ToString("x4");
+                    var encodedValue = "\\u" + ((int) c).ToString("x4");
                     sb.Append(encodedValue);
                 }
                 else
@@ -31,7 +31,7 @@
             return Regex.Replace(
                 value,
                 @"\\u(?<Value>[a-zA-Z0-9]{4})",
-                m => { return ((char) int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString(); });
+                m => ((char)int.Parse(m.Groups["Value"].Value, NumberStyles.HexNumber)).ToString());
         }
     }
 }

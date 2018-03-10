@@ -1,34 +1,29 @@
 ﻿namespace AaronLuna.Common.Numeric
 {
-    using System.IO;
-
     public static class NumericExtensions
     {
         public static string ConvertBytesForDisplay(this long bytes)
         {
-            const float OneKb = 1024;
-            const float OneMb = 1024 * 1024;
-            const float OneGb = 1024 * 1024 * 1024;
-            string convertedBytes;
+            const float oneKb = 1024;
+            const float oneMb = 1024 * 1024;
+            const float oneGb = 1024 * 1024 * 1024;
 
-            if (bytes > OneGb)
+            if (bytes > oneGb)
             {
-                convertedBytes = $"{bytes / OneGb:#.##} GB";
-            }
-            else if (bytes > OneMb)
-            {
-                convertedBytes = $"{bytes / OneMb:#.##} MB";
-            }
-            else if (bytes > OneKb)
-            {
-                convertedBytes = $"{bytes / OneKb:#.##} KB";
-            }
-            else
-            {
-                convertedBytes = $"{bytes} bytes";
+                return $"{bytes / oneGb:#.##} GB";
             }
 
-            return convertedBytes;
+            if (bytes > oneMb)
+            {
+                return $"{bytes / oneMb:#.##} MB";
+            }
+
+            if (bytes > oneKb)
+            {
+                return $"{bytes / oneKb:#.##} KB";
+            }
+
+            return $"{bytes} bytes";
         }
 
         public static bool IsLastIteration(this int i, int count)

@@ -18,7 +18,7 @@
         public const string CidrPrivateBlockClassB = "172.16.0.0/12";
         public const string CidrPrivateBlockClassC = "192.168.0.0/16";
 
-        private const string Pattern =
+        const string Pattern =
             @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
@@ -52,10 +52,10 @@
             IPAddress localIp;
             try
             {
-                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+                using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
                     socket.Connect("8.8.8.8", 65530);
-                    IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                    var endPoint = socket.LocalEndPoint as IPEndPoint;
                     localIp = endPoint.Address;
                 }
             }
@@ -181,7 +181,7 @@
             return checkRangeA.Value || checkRangeB.Value || checkRangeC.Value;
         }
 
-        private static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
+        static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
         {
             var digits = ipv4.Trim().Split('.').ToList();
             if (digits.Count != 4)
@@ -197,7 +197,7 @@
                     return Result.Fail<byte[]>($"Unable to parse IPv4 address from string: {ipv4}");
                 }
 
-                bytes[i] = (byte) parsedInt;
+                bytes[i] = (byte)parsedInt;
             }
 
             return Result.Ok(bytes);

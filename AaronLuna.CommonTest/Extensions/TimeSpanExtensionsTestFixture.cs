@@ -2,7 +2,7 @@
 {
     using System;
 
-    using AaronLuna.Common.Extensions;
+    using Common.Extensions;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -90,7 +90,7 @@
         [TestMethod]
         public void TestWithCurrentTime()
         {
-            var dateTime1 = DateTime.Now;            
+            var dateTime1 = DateTime.Now;
             var dateTime2 = new DateTime(dateTime1.Ticks + 5_000_000);
             var timeSpan = (dateTime2 - dateTime1).ToFormattedString();
 

@@ -4,7 +4,7 @@
     {
         public static int GetNumberOfConsecutiveMatchingChars(string a, string b, bool handleLengthDifference)
         {
-            var equalsReturnCode = -1;
+            const int equalsReturnCode = -1;
             if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b))
             {
                 return handleLengthDifference ? 0 : equalsReturnCode;

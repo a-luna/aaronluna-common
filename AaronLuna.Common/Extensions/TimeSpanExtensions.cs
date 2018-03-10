@@ -17,14 +17,14 @@ namespace AaronLuna.Common.Extensions
             if (numYears > 0)
             {
                 s += $"{numYears}y ";
-                timeSpan = timeSpan - new TimeSpan(numYears * 365, 0, 0, 0);
+                timeSpan -= new TimeSpan(numYears * 365, 0, 0, 0);
             }
 
             var numWeeks = timeSpan.Days / 7;
             if (numWeeks > 0)
             {
                 s += $"{numWeeks}w ";
-                timeSpan = timeSpan - new TimeSpan(numWeeks * 7, 0, 0, 0);
+                timeSpan -= new TimeSpan(numWeeks * 7, 0, 0, 0);
             }
 
             if (timeSpan.Days > 0)

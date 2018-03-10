@@ -4,7 +4,7 @@
     using System.Net.Http;
     using System.Threading.Tasks;
 
-    public class HttpHelper
+    public static class HttpHelper
     {
         public static async Task<Result<string>> GetUrlContentAsStringAsync(string url)
         {
