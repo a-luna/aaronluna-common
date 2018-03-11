@@ -18,7 +18,7 @@
         public const string CidrPrivateBlockClassB = "172.16.0.0/12";
         public const string CidrPrivateBlockClassC = "192.168.0.0/16";
 
-        const string Pattern =
+        const string IPv4Pattern =
             @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
@@ -91,7 +91,7 @@
             var ips = new List<IPAddress>();
             try
             {
-                var regex = new Regex(Pattern);
+                var regex = new Regex(IPv4Pattern);
                 foreach (Match match in regex.Matches(input))
                 {
                     var parse = ParseSingleIPv4Address(match.Value);
@@ -152,11 +152,11 @@
 
             try
             {
-                var IP_addr = BitConverter.ToInt32(IPAddress.Parse(cidrAddress).GetAddressBytes(), 0);
-                var CIDR_addr = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
-                var CIDR_mask = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(cidrNetworkBitCount)));
+                var ipAddressBytes = BitConverter.ToInt32(IPAddress.Parse(cidrAddress).GetAddressBytes(), 0);
+                var cidrAddressBytes = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
+                var cidrMaskBytes = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(cidrNetworkBitCount)));
 
-                ipIsInRange = ((IP_addr & CIDR_mask) == (CIDR_addr & CIDR_mask));
+                ipIsInRange = (ipAddressBytes & cidrMaskBytes) == (cidrAddressBytes & cidrMaskBytes);
             }
             catch (Exception ex)
             {

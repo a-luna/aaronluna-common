@@ -34,7 +34,6 @@
                 using (var bw = new BinaryWriter(fs))
                 {
                     bw.Write(buffer, 0, length);
-                    bw.Close();
                 }
             }
             catch (UnauthorizedAccessException ex)
@@ -52,9 +51,8 @@
                 return string.Empty;
             }
 
-            var totalMilliseconds = elapsed.Ticks / 10_000;
-            var bytesPerMs = bytesReceived / (double)totalMilliseconds;
-            var bytesPerSecond = bytesPerMs * 1000;
+            var elapsedMilliseconds = elapsed.Ticks / (double) 10_000;
+            var bytesPerSecond = (bytesReceived * 1000) / elapsedMilliseconds;
             var kilobytesPerSecond = bytesPerSecond / 1024;
             var megabytesPerSecond = kilobytesPerSecond / 1024;
 
@@ -63,12 +61,9 @@
                 return $"{megabytesPerSecond:F1} MB/s";
             }
 
-            if (kilobytesPerSecond > 1)
-            {
-                return $"{kilobytesPerSecond:F1} KB/s";
-            }
-
-            return $"{bytesPerSecond:F1} bytes/s";
+            return kilobytesPerSecond > 1
+                ? $"{kilobytesPerSecond:F1} KB/s"
+                : $"{bytesPerSecond:F1} bytes/s";
         }
 
         public static string FileSizeToString(long fileSizeInBytes)
@@ -87,12 +82,9 @@
                 return $"{fileSizeInBytes / oneMb:#.##} MB";
             }
 
-            if (fileSizeInBytes > oneKb)
-            {
-                return $"{fileSizeInBytes / oneKb:#.##} KB";
-            }
-
-            return $"{fileSizeInBytes} fileSizeInBytes";
+            return fileSizeInBytes > oneKb
+                ? $"{fileSizeInBytes / oneKb:#.##} KB"
+                : $"{fileSizeInBytes} fileSizeInBytes";
         }
     }
 }

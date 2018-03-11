@@ -16,7 +16,7 @@
             return list.Select(str => (string)str.Clone()).ToList();
         }
 
-        public static bool IsEqualTo(this List<string> thisList, List<string> otherList)
+        public static bool IsEqualTo<T>(this List<T> thisList, List<T> otherList)
         {
             thisList.Sort();
             otherList.Sort();
@@ -90,14 +90,10 @@
             }
 
             var bytes = StringToByteArray(hexString).ToList();
-            if (bytes.Count > 0)
-            {
-                var mostSignificantByte = Convert.ToString(bytes[0], 2);
+            if (bytes.Count <= 0) return false;
 
-                return mostSignificantByte.StartsWith("1", StringComparison.InvariantCulture);
-            }
-
-            return false;
+            var mostSignificantByte = Convert.ToString(bytes[0], 2);
+            return mostSignificantByte.StartsWith("1", StringComparison.InvariantCulture);
         }
 
         public static bool HexStringRepresentsPositiveNumber(this string hexString)
@@ -108,14 +104,10 @@
             }
 
             var bytes = StringToByteArray(hexString).ToList();
-            if (bytes.Count > 0)
-            {
-                var mostSignificantByte = Convert.ToString(bytes[0], 2);
+            if (bytes.Count <= 0) return false;
 
-                return mostSignificantByte.StartsWith("0", StringComparison.InvariantCulture);
-            }
-
-            return false;
+            var mostSignificantByte = Convert.ToString(bytes[0], 2);
+            return mostSignificantByte.StartsWith("0", StringComparison.InvariantCulture);
         }
 
         static byte[] StringToByteArray(string hexString)
