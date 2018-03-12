@@ -76,9 +76,7 @@ namespace AaronLuna.Common.Console
             lock (_timer)
             {
                 if (_disposed) return;
-
-                var currentProgress = GetProgressBarText(_currentProgress);
-                UpdateText(currentProgress);
+               UpdateText(GetProgressBarText(_currentProgress));
                 ResetTimer();
             }
         }
