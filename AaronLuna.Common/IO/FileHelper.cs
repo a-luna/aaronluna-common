@@ -74,16 +74,16 @@
 
             if (fileSizeInBytes > oneGb)
             {
-                return $"{fileSizeInBytes / oneGb:#.##} GB";
+                return $"{fileSizeInBytes / oneGb:F2} GB";
             }
 
             if (fileSizeInBytes > oneMb)
             {
-                return $"{fileSizeInBytes / oneMb:#.##} MB";
+                return $"{fileSizeInBytes / oneMb:F2} MB";
             }
 
             return fileSizeInBytes > oneKb
-                ? $"{fileSizeInBytes / oneKb:#.##} KB"
+                ? $"{fileSizeInBytes / oneKb:F2} KB"
                 : $"{fileSizeInBytes} fileSizeInBytes";
         }
     }

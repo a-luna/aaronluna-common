@@ -1,11 +1,13 @@
-﻿using System.Linq;
-using AaronLuna.Common.IO;
+﻿using AaronLuna.Common.Extensions;
 
 namespace AaronLuna.Common.Console
 {
     using System;
+    using System.Linq;
     using System.Text;
     using System.Threading;
+
+    using IO;
 
     public class ConsoleProgressBar : IDisposable, IProgress<double>
     {
@@ -27,6 +29,7 @@ namespace AaronLuna.Common.Console
         Timer _timer;
         double _currentProgress;
         string _currentText = string.Empty;
+        long _lastReportTicks;
         bool _disposed;
         int _animationIndex;
 
@@ -40,6 +43,15 @@ namespace AaronLuna.Common.Console
             CompletedBlock = "#";
             UncompletedBlock = "-";
             AnimationSequence = DefaultSpinnerAnimation;
+            _lastReportTicks = DateTime.Now.Ticks;
+
+            FileStalledInterval = TimeSpan.FromSeconds(5);
+
+            DisplayBar = true;
+            DisplayPercentComplete = true;
+            DisplayBytes = true;
+            DisplayLastRxTime = false;
+            DisplayAnimation = true;
         }
 
         public int NumberOfBlocks { get; set; }
@@ -50,10 +62,22 @@ namespace AaronLuna.Common.Console
         public string AnimationSequence { get; set; }
         public long BytesReceived { get; set; }
         public long FileSizeInBytes { get; set; }
+        public TimeSpan FileStalledInterval { get; set; }
+
+        public bool DisplayBar { get; set; }
+        public bool DisplayPercentComplete { get; set; }
+        public bool DisplayBytes { get; set; }
+        public bool DisplayLastRxTime { get; set; }
+        public bool DisplayAnimation { get; set; }
+
+        public event EventHandler<ProgressEventArgs> FileTransferStalled; 
 
         public void Report(double value)
         {
             // Make sure value is in [0..1] range
+            var ticks = DateTime.Now.Ticks;
+            Interlocked.Exchange(ref _lastReportTicks, ticks);
+
             value = Math.Max(0, Math.Min(1, value));
             Interlocked.Exchange(ref _currentProgress, value);
         }
@@ -76,15 +100,26 @@ namespace AaronLuna.Common.Console
             lock (_timer)
             {
                 if (_disposed) return;
-               UpdateText(GetProgressBarText(_currentProgress));
+                var elapsedTicks = DateTime.Now.Ticks - _lastReportTicks;
+                var elapsed = TimeSpan.FromTicks(elapsedTicks);
+                
+                UpdateText(GetProgressBarText(_currentProgress, elapsedTicks));
                 ResetTimer();
+
+                if (elapsed < FileStalledInterval) return;
+
+                FileTransferStalled?.Invoke(this,
+                    new ProgressEventArgs
+                    {
+                        LastDataReceived = new DateTime(_lastReportTicks),
+                        TimerIntervalTriggered = DateTime.Now
+                    });
             }
         }
 
-        string GetProgressBarText(double currentProgress)
+        string GetProgressBarText(double currentProgress, long elapsedTicks)
         {
             var numBlocksCompleted = (int)(currentProgress * NumberOfBlocks);
-
             var completedBlocks = string.Empty;
             foreach (var i in Enumerable.Range(0, numBlocksCompleted))
             {
@@ -97,18 +132,32 @@ namespace AaronLuna.Common.Console
                 uncompletedBlocks += UncompletedBlock;
             }
 
-            var progressBar = $"{StartBracket}{completedBlocks}{uncompletedBlocks}{EndBracket}";
-            var percent = (int)(currentProgress * 100);
+            var progressBar = $"{StartBracket}{completedBlocks}{uncompletedBlocks}{EndBracket} ";
+            var percent = $" {(int)(currentProgress * 100)}% ";
             var bytesReceived = FileHelper.FileSizeToString(BytesReceived);
             var fileSizeInBytes = FileHelper.FileSizeToString(FileSizeInBytes);
+            var bytes = $" {bytesReceived} of {fileSizeInBytes} ";
+            var timeSinceLastRx = TimeSpan.FromTicks(elapsedTicks).ToFormattedString();
+            var elapsed = $" (Last Rx: {timeSinceLastRx}) ";
+            var whiteSpace = " ";
             var animation = AnimationSequence[_animationIndex++ % AnimationSequence.Length];
+
+            if (!DisplayBar) progressBar = string.Empty;
+            if (!DisplayPercentComplete) percent = string.Empty;
+            if (!DisplayBytes) bytes = string.Empty;
+            if (!DisplayLastRxTime) elapsed = string.Empty;
+            if (!DisplayAnimation) animation = ' ';
 
             if (currentProgress is 1)
             {
                 animation = ' ';
             }
 
-            return $"{progressBar} {percent}% {bytesReceived} of {fileSizeInBytes} {animation}";
+            var fullBar =  $"{progressBar}{percent}{bytes}{elapsed}{whiteSpace}{animation}{whiteSpace}";
+            fullBar = fullBar.Replace("  ", " ");
+            fullBar.TrimEnd();
+
+            return fullBar;
         }
 
         void UpdateText(string text)
@@ -153,7 +202,6 @@ namespace AaronLuna.Common.Console
             lock (_timer)
             {
                 _disposed = true;
-                UpdateText(GetProgressBarText(1));
             }
         }
 

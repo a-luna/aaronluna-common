@@ -1,4 +1,7 @@
-﻿namespace AaronLuna.Common.Network
+﻿using System.Net.NetworkInformation;
+using System.Text;
+
+namespace AaronLuna.Common.Network
 {
     using Enums;
     using Http;
@@ -14,6 +17,9 @@
 
     public static class Network
     {
+        public const string LocalIpError =
+            "Unable to determine the local IP address for this machine, please ensure that the CIDR mask is correct for your LAN. For example, the correct CIDR mask for IP address 192.168.2.3 would be a string value of \"192.168.2.0/24\"";
+
         public const string CidPrivateBlockClassA = "10.0.0.0/8";
         public const string CidrPrivateBlockClassB = "172.16.0.0/12";
         public const string CidrPrivateBlockClassC = "192.168.0.0/16";
@@ -24,27 +30,44 @@
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
             var getUrlResult = await HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/").ConfigureAwait(false);
-            if (getUrlResult.Failure)
+
+            return getUrlResult.Success
+                ? ParseSingleIPv4Address(getUrlResult.Value)
+                : Result.Fail<IPAddress>(getUrlResult.Error);
+        }
+
+        public static Result<IPAddress> GetLocalIpAddress(string cidrMask)
+        {
+            var acquiredLocalIp = GetLocalIPv4AddressFromInternet();
+            if (acquiredLocalIp.Success)
             {
-                return Result.Fail<IPAddress>(getUrlResult.Error);
+                return Result.Ok(acquiredLocalIp.Value);
             }
 
-            var parse = ParseSingleIPv4Address(getUrlResult.Value);
+            var localIps = GetLocalIPv4AddressList();
+            if (localIps.Count == 1)
+            {
+                return Result.Ok(localIps[0]);
+            }
 
-            return parse.Success
-                ? Result.Ok(parse.Value)
-                : Result.Fail<IPAddress>(parse.Error);
+            foreach (var ip in localIps)
+            {
+                var result = IpAddressIsInCidrRange(ip.ToString(), cidrMask);
+                if (!result.Success) continue;
+                if (!result.Value) continue;
+
+                return Result.Ok(ip);
+            }
+
+            return Result.Fail<IPAddress>(LocalIpError);
         }
 
         public static List<IPAddress> GetLocalIPv4AddressList()
         {
             var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
 
-            var ips =
-                ipHostInfo.AddressList.Select(ip => ip)
-                    .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();
-
-            return ips;
+            return ipHostInfo.AddressList.Select(ip => ip)
+                .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();            
         }
 
         public static Result<IPAddress> GetLocalIPv4AddressFromInternet()
@@ -179,6 +202,72 @@
             var checkRangeC = IpAddressIsInCidrRange(ipAddress, CidrPrivateBlockClassC);
 
             return checkRangeA.Value || checkRangeB.Value || checkRangeC.Value;
+        }
+
+        public static List<UnicastIPAddressInformation> GetUnicastIPv4AddressInfoForAllNetworkAdapters()
+        {
+            var ipv4AddressList = new List<UnicastIPAddressInformation>();
+            foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                var uniCastIPv4AddressList =
+                    nic.GetIPProperties().UnicastAddresses
+                        .Select(uni => uni)
+                        .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+
+                ipv4AddressList.AddRange(uniCastIPv4AddressList);
+            }
+
+            return ipv4AddressList;
+        }
+
+        public static void DisplayUnicastIPv4AddressInfoForAllNetworkAdapters()
+        {
+            foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                var adapterProperties = adapter.GetIPProperties();
+
+                var uniCast =
+                    adapterProperties.UnicastAddresses
+                        .Select(uni => uni)
+                        .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+
+                if (uniCast.Count > 0)
+                {
+                    Console.WriteLine($"Adapter Name....................: {adapter.Name}");
+                    Console.WriteLine($"Description.....................: {adapter.Description}");
+                    foreach (var uni in uniCast)
+                    {
+                        Console.WriteLine($"  Unicast Address...............: {uni.Address}");
+                        Console.WriteLine($"    IPv4 Mask...................: {uni.IPv4Mask}");
+                        Console.WriteLine($"    Prefix Length...............: {uni.PrefixLength}");
+                        Console.WriteLine($"    Prefix Origin...............: {uni.PrefixOrigin}");
+                        Console.WriteLine($"    Suffix Origin...............: {uni.SuffixOrigin}");
+                        Console.WriteLine($"    Duplicate Address Detection : {uni.DuplicateAddressDetectionState}");
+                        Console.WriteLine($"    DNS Eligible................: {uni.IsDnsEligible}");
+                        Console.WriteLine($"    Transient...................: {uni.IsTransient}");
+                    }
+                    Console.WriteLine();
+                }
+            }
+        }
+
+        public static string EncodeNonAsciiCharacters(string value)
+        {
+            var sb = new StringBuilder();
+            foreach (var c in value)
+            {
+                if (c > 127)
+                {
+                    // This character is too big for ASCII
+                    var encodedValue = "\\u" + ((int)c).ToString("x4");
+                    sb.Append(encodedValue);
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString();
         }
 
         static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
