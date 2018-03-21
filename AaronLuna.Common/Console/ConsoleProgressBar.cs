@@ -138,7 +138,7 @@ namespace AaronLuna.Common.Console
             var fileSizeInBytes = FileHelper.FileSizeToString(FileSizeInBytes);
             var bytes = $" {bytesReceived} of {fileSizeInBytes} ";
             var timeSinceLastRx = TimeSpan.FromTicks(elapsedTicks).ToFormattedString();
-            var elapsed = $" (Last Rx: {timeSinceLastRx}) ";
+            var elapsed = $" ({timeSinceLastRx} since last Rx) ";
             var whiteSpace = " ";
             var animation = AnimationSequence[_animationIndex++ % AnimationSequence.Length];
 

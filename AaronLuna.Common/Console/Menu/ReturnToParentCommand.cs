@@ -4,14 +4,28 @@
 
     using Result;
 
-    public class ReturnToParentCommand : BoolCommand
+    public class ReturnToParentCommand<T> : ICommand<T>
     {
-        public ReturnToParentCommand(string itemText) : base(itemText, true) { }
+        public ReturnToParentCommand() { }
 
-        public override async Task<Result<bool>> ExecuteAsync()
+        public ReturnToParentCommand(string itemText)
+        {
+            ReturnToParent = true;
+            ItemText = itemText;
+        }
+
+        public string ItemText { get; set; }
+        public bool ReturnToParent { get; set; }
+
+        public async Task<CommandResult<T>> ExecuteAsync()
         {
             await Task.Delay(1);
-            return Result.Ok(true);
+
+            return new CommandResult<T>
+            {
+                ReturnToParent = ReturnToParent,
+                Result = (Result<T>)Result.Ok()
+            };
         }
     }
 }

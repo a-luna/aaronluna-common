@@ -7,61 +7,60 @@
 
     using Result;
 
-    public class SelectionMenu<T> : BaseCommand<T>
+    public abstract class SelectionMenuSingleChoice<T> : IConsoleMenu<T>
     {
-        public SelectionMenu(string itemText, List<ICommand<T>> options)
-            : base(itemText, false)
+        protected SelectionMenuSingleChoice() { }
+
+        protected SelectionMenuSingleChoice(string itemText, List<ICommand<T>> options)
         {
+            ReturnToParent = false;
+            ItemText = itemText;
             Options = options;
         }
 
+        public string ItemText { get; set; }
+        public bool ReturnToParent { get; set; }
         public string MenuText { get; set; }
         public List<ICommand<T>> Options { get; set; }
         public int OptionCount => Options.Count;
 
-        public override async Task<Result<T>> ExecuteAsync()
+        public async Task<CommandResult<T>> ExecuteAsync()
         {
-            var exit = false;
-            Result<T> result = null;
-
-            while (!exit)
+            var userSelection = 0;
+            while (userSelection == 0)
             {
-                var userSelection = 0;
-                while (userSelection == 0)
+                DisplayMenu();
+                var input = Console.ReadLine();
+
+                var validationResult = ValidateUserInput(input, OptionCount);
+                if (validationResult.Failure)
                 {
-                    DisplayMenu();
-                    var input = Console.ReadLine();
-
-                    var validationResult = ValidateUserInput(input, OptionCount);
-                    if (validationResult.Failure)
-                    {
-                        Console.WriteLine(validationResult.Error);
-                        continue;
-                    }
-
-                    userSelection = validationResult.Value;
+                    Console.WriteLine(validationResult.Error);
+                    continue;
                 }
 
-                var selectedOption = Options[userSelection - 1];
-                result = await selectedOption.ExecuteAsync();
-                exit = selectedOption.ReturnToParent();
-
-                if (result.Success) continue;
-                Console.WriteLine(result.Error);
-                exit = true;
+                userSelection = validationResult.Value;
             }
 
-            return result;
+            var selectedOption = Options[userSelection - 1];
+            var result = await selectedOption.ExecuteAsync();
+            if (result == null) throw new ArgumentNullException(nameof(result));
+
+            return new CommandResult<T>
+            {
+                ReturnToParent = ReturnToParent,
+                Result = result.Result
+            };
         }
 
-        void DisplayMenu()
+        public void DisplayMenu()
         {
             Console.Clear();
             Console.WriteLine(MenuText);
             Console.WriteLine();
             foreach (var i in Enumerable.Range(0, OptionCount))
             {
-                Console.WriteLine($"{i + 1}.{Options[i].GetItemText()}");
+                Console.WriteLine($"{i + 1}.{Options[i].ItemText}");
             }
         }
 
@@ -84,6 +83,5 @@
 
             return Result.Ok(parsedNum);
         }
-
     }
 }
