@@ -2,13 +2,9 @@
 {
     using System.Collections.Generic;
 
-    public interface IConsoleMenu<T> : ICommand<T>
+    public interface IConsoleMenu : ICommand
     {
         string MenuText { get; set; }
-        List<ICommand<T>> Options { get; set; }
-        int OptionCount { get; }
-
-        void DisplayMenu();
-
+        List<ICommand> Options { get; set; }
     }
 }

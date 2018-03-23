@@ -2,16 +2,20 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading.Tasks;
 
     using Result;
 
-    public abstract class SelectionMenuLoop<T> : IConsoleMenu<T>
+    public abstract class SelectionMenuLoop : ICommand
     {
-        protected SelectionMenuLoop() { }
+        protected SelectionMenuLoop()
+        {
+            ReturnToParent = false;
+            ItemText = string.Empty;
+            Options = new List<ICommand>();
+        }
 
-        protected SelectionMenuLoop(string itemText, List<ICommand<T>> options)
+        protected SelectionMenuLoop(string itemText, List<ICommand> options)
         {
             ReturnToParent = false;
             ItemText = itemText;
@@ -21,23 +25,23 @@
         public string ItemText { get; set; }
         public bool ReturnToParent { get; set; }
         public string MenuText { get; set; }
-        public List<ICommand<T>> Options { get; set; }
+        public List<ICommand> Options { get; set; }
         public int OptionCount => Options.Count;
 
-        public async Task<CommandResult<T>> ExecuteAsync()
+        public async Task<Result> ExecuteAsync()
         {
             var exit = false;
-            CommandResult<T> commandResult = null;
+            Result result = null;
 
             while (!exit)
             {
                 var userSelection = 0;
                 while (userSelection == 0)
                 {
-                    DisplayMenu();
+                    MenuFunctions.DisplayMenu(MenuText, Options);
                     var input = Console.ReadLine();
 
-                    var validationResult = ValidateUserInput(input, OptionCount);
+                    var validationResult = MenuFunctions.ValidateUserInput(input, OptionCount);
                     if (validationResult.Failure)
                     {
                         Console.WriteLine(validationResult.Error);
@@ -48,52 +52,15 @@
                 }
 
                 var selectedOption = Options[userSelection - 1];
-                commandResult = await selectedOption.ExecuteAsync();
-                exit = commandResult.ReturnToParent;
-                var result = commandResult.Result;
+                result = await selectedOption.ExecuteAsync();
+                exit = selectedOption.ReturnToParent;
 
                 if (result.Success) continue;
                 Console.WriteLine(result.Error);
                 exit = true;
             }
 
-            return new CommandResult<T>
-            {
-                ReturnToParent = ReturnToParent,
-                Result = commandResult.Result
-            };
+            return result;
         }
-
-        public void DisplayMenu()
-        {
-            Console.Clear();
-            Console.WriteLine(MenuText);
-            Console.WriteLine();
-            foreach (var i in Enumerable.Range(0, OptionCount))
-            {
-                Console.WriteLine($"{i + 1}.{Options[i].ItemText}");
-            }
-        }
-
-        static Result<int> ValidateUserInput(string input, int rangeMax)
-        {
-            if (string.IsNullOrEmpty(input))
-            {
-                return Result.Fail<int>("Error! Input was null or empty string.");
-            }
-
-            if (!int.TryParse(input, out var parsedNum))
-            {
-                return Result.Fail<int>($"Unable to parse int value from input string: {input}");
-            }
-
-            if (parsedNum <= 0 || parsedNum > rangeMax)
-            {
-                return Result.Fail<int>($"{parsedNum} is not within allowed range {1}-{rangeMax}");
-            }
-
-            return Result.Ok(parsedNum);
-        }
-
     }
 }

@@ -4,28 +4,23 @@
 
     using Result;
 
-    public class ReturnToParentCommand<T> : ICommand<T>
+    public class ReturnToParentCommand : ICommand
     {
         public ReturnToParentCommand() { }
 
-        public ReturnToParentCommand(string itemText)
+        public ReturnToParentCommand(string itemText, bool returnToParent)
         {
-            ReturnToParent = true;
+            ReturnToParent = returnToParent;
             ItemText = itemText;
         }
 
         public string ItemText { get; set; }
         public bool ReturnToParent { get; set; }
 
-        public async Task<CommandResult<T>> ExecuteAsync()
+        public async Task<Result> ExecuteAsync()
         {
             await Task.Delay(1);
-
-            return new CommandResult<T>
-            {
-                ReturnToParent = ReturnToParent,
-                Result = (Result<T>)Result.Ok()
-            };
+            return Result.Ok();
         }
     }
 }
