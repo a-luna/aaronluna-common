@@ -1,7 +1,4 @@
-﻿using System.Net.NetworkInformation;
-using System.Text;
-
-namespace AaronLuna.Common.Network
+﻿namespace AaronLuna.Common.Network
 {
     using Enums;
     using Http;
@@ -11,21 +8,17 @@ namespace AaronLuna.Common.Network
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
+    using System.Net.NetworkInformation;
     using System.Net.Sockets;
+    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     public static class Network
     {
-        public const string LocalIpError =
-            "Unable to determine the local IP address for this machine, please ensure that the CIDR mask is correct for your LAN. For example, the correct CIDR mask for IP address 192.168.2.3 would be a string value of \"192.168.2.0/24\"";
-
         public const string CidPrivateBlockClassA = "10.0.0.0/8";
         public const string CidrPrivateBlockClassB = "172.16.0.0/12";
         public const string CidrPrivateBlockClassC = "192.168.0.0/16";
-
-        const string IPv4Pattern =
-            @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
@@ -38,6 +31,12 @@ namespace AaronLuna.Common.Network
 
         public static Result<IPAddress> GetLocalIpAddress(string cidrMask)
         {
+            const string localIpError =
+                "Unable to determine the local IP address for this machine, " +
+                "please ensure that the CIDR mask is correct for your LAN. " +
+                "For example, the correct CIDR mask for IP address 192.168.2.3 " +
+                "would be a string value of \"192.168.2.0/24\"";
+
             var acquiredLocalIp = GetLocalIPv4AddressFromInternet();
             if (acquiredLocalIp.Success)
             {
@@ -59,7 +58,7 @@ namespace AaronLuna.Common.Network
                 return Result.Ok(ip);
             }
 
-            return Result.Fail<IPAddress>(LocalIpError);
+            return Result.Fail<IPAddress>(localIpError);
         }
 
         public static List<IPAddress> GetLocalIPv4AddressList()
@@ -106,6 +105,9 @@ namespace AaronLuna.Common.Network
 
         public static Result<List<IPAddress>> ParseAllIPv4Addresses(string input)
         {
+            const string ipV4Pattern =
+                @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
+
             if (string.IsNullOrEmpty(input))
             {
                 return Result.Fail<List<IPAddress>>("Input string cannot be null");
@@ -114,7 +116,7 @@ namespace AaronLuna.Common.Network
             var ips = new List<IPAddress>();
             try
             {
-                var regex = new Regex(IPv4Pattern);
+                var regex = new Regex(ipV4Pattern);
                 foreach (Match match in regex.Matches(input))
                 {
                     var parse = ParseSingleIPv4Address(match.Value);
@@ -149,7 +151,7 @@ namespace AaronLuna.Common.Network
         }
 
         // true if ipAddress falls inside the CIDR range, example
-        // bool result = IsInCidrRange("192.168.2.3", "192.168.2.0/24");
+        // bool result = IsInCidrRange("192.168.2.3", "192.168.2.0/24"); // result = true
         public static Result<bool> IpAddressIsInCidrRange(string ipAddress, string cidrMask)
         {
             if (string.IsNullOrEmpty(ipAddress))
@@ -191,15 +193,16 @@ namespace AaronLuna.Common.Network
 
         public static bool IpAddressIsInPrivateAddressSpace(string ipAddress)
         {
-            var parse = ParseSingleIPv4Address(ipAddress);
-            if (parse.Failure)
-            {
-                return false;
-            }
+            var validateIp = ParseSingleIPv4Address(ipAddress);
 
-            var checkRangeA = IpAddressIsInCidrRange(ipAddress, CidPrivateBlockClassA);
-            var checkRangeB = IpAddressIsInCidrRange(ipAddress, CidrPrivateBlockClassB);
-            var checkRangeC = IpAddressIsInCidrRange(ipAddress, CidrPrivateBlockClassC);
+            return validateIp.Success && IpAddressIsInPrivateAddressSpace(validateIp.Value);
+        }
+
+        public static bool IpAddressIsInPrivateAddressSpace(IPAddress ipAddress)
+        {
+            var checkRangeA = IpAddressIsInCidrRange(ipAddress.ToString(), CidPrivateBlockClassA);
+            var checkRangeB = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassB);
+            var checkRangeC = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassC);
 
             return checkRangeA.Value || checkRangeB.Value || checkRangeC.Value;
         }

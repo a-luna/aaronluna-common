@@ -11,10 +11,10 @@
         public readonly string Logger;
         public readonly string Message;
 
-        public bool IsError => Logging.Logger.ERROR.Equals(Level, StringComparison.Ordinal);
-        public bool IsWarning => Logging.Logger.WARN.Equals(Level, StringComparison.Ordinal);
-        public bool IsInformation => Logging.Logger.INFO.Equals(Level, StringComparison.Ordinal);
-        public bool IsDebug => Logging.Logger.DEBUG.Equals(Level, StringComparison.Ordinal);
+        public bool IsError => Logging.ERROR.Equals(Level, StringComparison.Ordinal);
+        public bool IsWarning => Logging.WARN.Equals(Level, StringComparison.Ordinal);
+        public bool IsInformation => Logging.INFO.Equals(Level, StringComparison.Ordinal);
+        public bool IsDebug => Logging.DEBUG.Equals(Level, StringComparison.Ordinal);
 
         public LogMessageInfo(string level, string logger, string message)
         {

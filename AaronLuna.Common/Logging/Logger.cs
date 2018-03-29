@@ -11,11 +11,6 @@
         static readonly Timer Timer = new Timer(Tick);
         static readonly StringBuilder LogQueue = new StringBuilder();
 
-        public const string DEBUG = "DEBUG";
-        public const string INFO = "INFO";
-        public const string WARN = "WARN";
-        public const string ERROR = "ERROR";
-        
         public static FileInfo LogFile { get; private set; }
         public static DirectoryInfo LogFolder => LogFile?.Directory;
         public static bool Listening { get; private set; }
@@ -65,22 +60,22 @@
             if (IgnoreDebug)
                 return;
 
-            Log(DEBUG, message);
+            Log(Logging.DEBUG, message);
         }
 
         public void Info(string message)
         {
-            Log(INFO, message);
+            Log(Logging.INFO, message);
         }
         
         public void Warn(string message, Exception ex = null)
         {
-            Log(WARN, message, ex);
+            Log(Logging.WARN, message, ex);
         }
 
         public void Error(string message, Exception ex = null)
         {
-            Log(ERROR, message, ex);
+            Log(Logging.ERROR, message, ex);
         }
 
         public void Log(string level, string message, Exception ex = null)
