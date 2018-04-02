@@ -6,11 +6,6 @@
 
     public static class StringExtensions
     {
-        const string HexadecimalDigits = "0123456789ABCDEFXabcdefx";
-        const string AlphabeticCharacterSet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const string AlphanumericCharacterSet = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        const string CharsAllowedInFileNames = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-";
-
         public static List<string> Clone(this List<string> list)
         {
             return list.Select(str => (string)str.Clone()).ToList();
@@ -133,7 +128,7 @@
 
         public static bool ContainsOnlyHexadecimalDigits(this string input)
         {
-            var hexChars = HexadecimalDigits.ToCharArray().ToList();
+            var hexChars = Constants.HexadecimalDigits.ToCharArray().ToList();
             var inputChars = input.Distinct().ToList();
             var invalidChars = inputChars.Select(ch => ch).Where(ch => !hexChars.Contains(ch)).ToList();
 
@@ -142,7 +137,7 @@
 
         public static bool ContainsOnlyAlphabeticCharacters(this string input)
         {
-            var alphabeticCharacters = AlphabeticCharacterSet.ToCharArray().ToList();
+            var alphabeticCharacters = Constants.AlphabeticCharacterSet.ToCharArray().ToList();
             var inputCharacters = input.Distinct().ToList();
             var invalidCharacters =
                 inputCharacters.Select(ch => ch).Where(ch => !alphabeticCharacters.Contains(ch)).ToList();
@@ -152,7 +147,7 @@
 
         public static bool ContainsOnlyAlphanumericCharacters(this string input)
         {
-            var alphanumericCharacters = AlphanumericCharacterSet.ToCharArray().ToList();
+            var alphanumericCharacters = Constants.AlphanumericCharacterSet.ToCharArray().ToList();
             var inputCharacters = input.Distinct().ToList();
             var invalidCharacters =
                 inputCharacters.Select(ch => ch).Where(ch => !alphanumericCharacters.Contains(ch)).ToList();
@@ -162,7 +157,7 @@
 
         public static bool IsValidFileName(this string fileName)
         {
-            var allowedChars = CharsAllowedInFileNames.ToCharArray().ToList();
+            var allowedChars = Constants.CharsAllowedInFileNames.ToCharArray().ToList();
             var inputCharacters = fileName.Distinct().ToList();
             var invalidCharacters =
                 inputCharacters.Select(ch => ch).Where(ch => !allowedChars.Contains(ch)).ToList();

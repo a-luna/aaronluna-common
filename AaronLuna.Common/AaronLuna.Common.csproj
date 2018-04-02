@@ -13,7 +13,6 @@
     <Folder Include="Http\" />
     <Folder Include="IO\" />
     <Folder Include="Result\" />
-    <Folder Include="Numeric\" />
   </ItemGroup>
 
 </Project>
