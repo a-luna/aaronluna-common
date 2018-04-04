@@ -7,11 +7,11 @@ namespace AaronLuna.Common.Console
         public ProgressEventArgs()
         {
             LastDataReceived = DateTime.MinValue;
-            TimerIntervalTriggered = DateTime.MinValue;
+            TimeOutTriggered = DateTime.MinValue;
         }
 
         public DateTime LastDataReceived { get; set; }
-        public DateTime TimerIntervalTriggered { get; set; }
-        public TimeSpan Elapsed => TimerIntervalTriggered - LastDataReceived;
+        public DateTime TimeOutTriggered { get; set; }
+        public TimeSpan Elapsed => TimeOutTriggered - LastDataReceived;
     }
 }

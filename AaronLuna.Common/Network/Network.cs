@@ -16,7 +16,7 @@
 
     public static class Network
     {
-        public const string CidPrivateBlockClassA = "10.0.0.0/8";
+        public const string CidrPrivateBlockClassA = "10.0.0.0/8";
         public const string CidrPrivateBlockClassB = "172.16.0.0/12";
         public const string CidrPrivateBlockClassC = "192.168.0.0/16";
 
@@ -177,8 +177,8 @@
 
             try
             {
-                var ipAddressBytes = BitConverter.ToInt32(IPAddress.Parse(cidrAddress).GetAddressBytes(), 0);
-                var cidrAddressBytes = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
+                var ipAddressBytes = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
+                var cidrAddressBytes = BitConverter.ToInt32(IPAddress.Parse(cidrAddress).GetAddressBytes(), 0);
                 var cidrMaskBytes = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(cidrNetworkBitCount)));
 
                 ipIsInRange = (ipAddressBytes & cidrMaskBytes) == (cidrAddressBytes & cidrMaskBytes);
@@ -200,7 +200,7 @@
 
         public static bool IpAddressIsInPrivateAddressSpace(IPAddress ipAddress)
         {
-            var checkRangeA = IpAddressIsInCidrRange(ipAddress.ToString(), CidPrivateBlockClassA);
+            var checkRangeA = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassA);
             var checkRangeB = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassB);
             var checkRangeC = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassC);
 

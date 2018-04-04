@@ -1,90 +1,35 @@
-﻿using AaronLuna.Common.Extensions;
-
-namespace AaronLuna.Common.Console
+﻿namespace AaronLuna.Common.Console
 {
     using System;
     using System.Linq;
     using System.Text;
     using System.Threading;
 
-    using IO;
-
     public class ConsoleProgressBar : IDisposable, IProgress<double>
     {
-        public static string RotatingArrowAnimation = "\u2190\u2196\u2191\u2197\u2192\u2198\u2193\u2199";
-        public static string GrowingBarAnimation = "\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588\u2587\u2586\u2585\u2584\u2583\u2581";
-        public static string BrailleAnimation1 = "\u28fe\u28fd\u28fb\u28bf\u287f\u28df\u28ef\u28f7";
-        public static string BrailleAnimation2 = "\u2801\u2802\u2804\u2840\u2880\u2820\u2810\u2808";
-        public static string EyeAnimation = "\u25e1\u25e1\u2299\u2299\u25e0\u25e0";
-        public static string SemicircleAnimation = "\u25d0\u25d3\u25d1\u25d2";
-        public static string RotatingTriangleAnimation = "\u25e2\u25e3\u25e4\u25e5";
-        public static string RotatingSquareAnimation = "\u2596\u2598\u259d\u2597";
-        public static string RotatingPipeAnimation = "\u2524\u2518\u2534\u2514\u251c\u250c\u252c\u2510";
-        public static string BouncingBallAnimation = ".oO\u00b0Oo.";
-        public static string ExplodingAnimation = ".oO@*";
-        public static string DefaultSpinnerAnimation = @"|/-\-";
-
         readonly TimeSpan _animationInterval = TimeSpan.FromSeconds(1.0 / 8);
 
-        Timer _timer;
-        double _currentProgress;
+        internal Timer Timer;
+        internal double CurrentProgress;
+        internal bool Disposed;
+        internal int AnimationIndex;
+
         string _currentText = string.Empty;
-        long _lastReportTicks;
-        bool _disposed;
-        int _animationIndex;
 
         public ConsoleProgressBar()
         {
-            Initialize();
-
             NumberOfBlocks = 10;
             StartBracket = "[";
             EndBracket = "]";
             CompletedBlock = "#";
-            UncompletedBlock = "-";
-            AnimationSequence = DefaultSpinnerAnimation;
-            _lastReportTicks = DateTime.Now.Ticks;
-
-            FileStalledInterval = TimeSpan.FromSeconds(5);
+            IncompleteBlock = "-";
+            AnimationSequence = ProgressAnimations.Default;
 
             DisplayBar = true;
             DisplayPercentComplete = true;
-            DisplayBytes = true;
-            DisplayLastRxTime = false;
             DisplayAnimation = true;
-        }
 
-        public int NumberOfBlocks { get; set; }
-        public string StartBracket { get; set; }
-        public string EndBracket { get; set; }
-        public string CompletedBlock { get; set; }
-        public string UncompletedBlock { get; set; }
-        public string AnimationSequence { get; set; }
-        public long BytesReceived { get; set; }
-        public long FileSizeInBytes { get; set; }
-        public TimeSpan FileStalledInterval { get; set; }
-
-        public bool DisplayBar { get; set; }
-        public bool DisplayPercentComplete { get; set; }
-        public bool DisplayBytes { get; set; }
-        public bool DisplayLastRxTime { get; set; }
-        public bool DisplayAnimation { get; set; }
-
-        public event EventHandler<ProgressEventArgs> FileTransferStalled; 
-
-        public void Report(double value)
-        {
-            // Make sure value is in [0..1] range
-            var ticks = DateTime.Now.Ticks;
-            Interlocked.Exchange(ref _lastReportTicks, ticks);
-
-            value = Math.Max(0, Math.Min(1, value));
-            Interlocked.Exchange(ref _currentProgress, value);
-        }
-
-        void Initialize()
-        {
-            _timer = new Timer(TimerHandler);
+            Timer = new Timer(TimerHandler);
 
             // A progress bar is only for temporary display in a console window.
             // If the console output is redirected to a file, draw nothing.
@@ -95,29 +40,34 @@ namespace AaronLuna.Common.Console
             }
         }
 
+        public int NumberOfBlocks { get; set; }
+        public string StartBracket { get; set; }
+        public string EndBracket { get; set; }
+        public string CompletedBlock { get; set; }
+        public string IncompleteBlock { get; set; }
+        public string AnimationSequence { get; set; }
+        public bool DisplayBar { get; set; }
+        public bool DisplayPercentComplete { get; set; }
+        public bool DisplayAnimation { get; set; }
+
+        public void Report(double value)
+        {
+            // Make sure value is in [0..1] range
+            value = Math.Max(0, Math.Min(1, value));
+            Interlocked.Exchange(ref CurrentProgress, value);
+        }
+
         void TimerHandler(object state)
         {
-            lock (_timer)
+            lock (Timer)
             {
-                if (_disposed) return;
-                var elapsedTicks = DateTime.Now.Ticks - _lastReportTicks;
-                var elapsed = TimeSpan.FromTicks(elapsedTicks);
-                
-                UpdateText(GetProgressBarText(_currentProgress, elapsedTicks));
+                if (Disposed) return;
+                UpdateText(GetProgressBarText(CurrentProgress));
                 ResetTimer();
-
-                if (elapsed < FileStalledInterval) return;
-
-                FileTransferStalled?.Invoke(this,
-                    new ProgressEventArgs
-                    {
-                        LastDataReceived = new DateTime(_lastReportTicks),
-                        TimerIntervalTriggered = DateTime.Now
-                    });
             }
         }
 
-        string GetProgressBarText(double currentProgress, long elapsedTicks)
+        string GetProgressBarText(double currentProgress)
         {
             var numBlocksCompleted = (int)(currentProgress * NumberOfBlocks);
             var completedBlocks = string.Empty;
@@ -129,23 +79,16 @@ namespace AaronLuna.Common.Console
             var uncompletedBlocks = string.Empty;
             foreach (var i in Enumerable.Range(0, NumberOfBlocks - numBlocksCompleted))
             {
-                uncompletedBlocks += UncompletedBlock;
+                uncompletedBlocks += IncompleteBlock;
             }
 
             var progressBar = $"{StartBracket}{completedBlocks}{uncompletedBlocks}{EndBracket} ";
             var percent = $" {(int)(currentProgress * 100)}% ";
-            var bytesReceived = FileHelper.FileSizeToString(BytesReceived);
-            var fileSizeInBytes = FileHelper.FileSizeToString(FileSizeInBytes);
-            var bytes = $" {bytesReceived} of {fileSizeInBytes} ";
-            var timeSinceLastRx = TimeSpan.FromTicks(elapsedTicks).ToFormattedString();
-            var elapsed = $" ({timeSinceLastRx} since last Rx) ";
             var whiteSpace = " ";
-            var animation = AnimationSequence[_animationIndex++ % AnimationSequence.Length];
+            var animation = AnimationSequence[AnimationIndex++ % AnimationSequence.Length];
 
             if (!DisplayBar) progressBar = string.Empty;
             if (!DisplayPercentComplete) percent = string.Empty;
-            if (!DisplayBytes) bytes = string.Empty;
-            if (!DisplayLastRxTime) elapsed = string.Empty;
             if (!DisplayAnimation) animation = ' ';
 
             if (currentProgress is 1)
@@ -153,14 +96,14 @@ namespace AaronLuna.Common.Console
                 animation = ' ';
             }
 
-            var fullBar =  $"{progressBar}{percent}{bytes}{elapsed}{whiteSpace}{animation}{whiteSpace}";
+            var fullBar = $"{progressBar}{percent}{whiteSpace}{animation}{whiteSpace}";
             fullBar = fullBar.Replace("  ", " ");
             fullBar.TrimEnd();
 
             return fullBar;
         }
 
-        void UpdateText(string text)
+        internal void UpdateText(string text)
         {
             // Get length of common portion
             var commonPrefixLength = 0;
@@ -190,18 +133,18 @@ namespace AaronLuna.Common.Console
             _currentText = text;
         }
 
-        void ResetTimer()
+        internal void ResetTimer()
         {
-            _timer.Change(_animationInterval, TimeSpan.FromMilliseconds(-1));
+            Timer.Change(_animationInterval, TimeSpan.FromMilliseconds(-1));
         }
 
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing) return;
 
-            lock (_timer)
+            lock (Timer)
             {
-                _disposed = true;
+                Disposed = true;
             }
         }
 

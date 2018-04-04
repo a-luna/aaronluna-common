@@ -1,16 +1,11 @@
-﻿using System;
-
-namespace AaronLuna.Common.Extensions
+﻿namespace AaronLuna.Common.Extensions
 {
+    using System;
+
     public static class TimeSpanExtensions
     {
         public static string ToFormattedString(this TimeSpan timeSpan)
         {
-            if (timeSpan.TotalSeconds <= 0)
-            {
-                return string.Empty;
-            }
-
             var s = string.Empty;
 
             var numYears = timeSpan.Days / 365;
@@ -57,15 +52,33 @@ namespace AaronLuna.Common.Extensions
                 s += $"{timeSpan.Seconds}s ";
             }
 
+            s = s.TrimStart();
+
             var remainingTicks = timeSpan.Ticks - (timeSpan.Seconds * 10_000_000);
             var milliseconds = remainingTicks / 10_000;
 
-            if (milliseconds > 0)
+            if (milliseconds <= 0)
             {
-                s += $"{milliseconds}ms";
+                s += "\u00a0\u00a00ms";
             }
 
-            return s.Trim();
+            if (milliseconds > 0)
+            {
+                if (milliseconds < 100)
+                {
+                    s += $"\u00a0{milliseconds}ms";
+                }
+                else if (milliseconds < 10)
+                {
+                    s += $"\u00a0\u00a0{milliseconds}ms";
+                }
+                else
+                {
+                    s += $"{milliseconds}ms";
+                }
+            }
+
+            return s;
         }
     }
 }
