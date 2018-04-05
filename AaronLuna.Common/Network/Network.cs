@@ -1,6 +1,7 @@
 ﻿namespace AaronLuna.Common.Network
 {
-    using Enums;
+	using AaronLuna.Common.Numeric;
+	using Enums;
     using Http;
     using Result;
 
@@ -136,6 +137,38 @@
             return ips.Count > 0 ? Result.Ok(ips) : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
         }
 
+		public static Result<string> ConvertIpAddressToBinary(string ip)
+		{
+			var parseResult = ParseSingleIPv4Address(ip);
+            if (parseResult.Failure)
+			{
+				return Result.Fail<string>(parseResult.Error);
+			}
+
+			var binary = ConvertIpAddressToBinary(parseResult.Value);
+
+			return Result.Ok(binary);
+		}
+
+		public static string ConvertIpAddressToBinary(IPAddress ip)
+        {
+            var bytes = ip.GetAddressBytes();
+            var s = string.Empty;
+
+            foreach (var i in Enumerable.Range(0, bytes.Length))
+            {
+                var oneByte = Convert.ToString(bytes[i], 2).PadLeft(8, '0');
+				s += oneByte.Insert(4, " ");
+
+                if (!i.IsLastIteration(bytes.Length))
+				{
+					s += $" - ";
+				}
+            }
+
+            return s;
+        }
+
         public static IpAddressSimilarity CompareTwoIpAddresses(IPAddress ip1, IPAddress ip2)
         {
             var ip1Bytes = ip1.GetAddressBytes();
@@ -254,24 +287,7 @@
             }
         }
 
-        public static string EncodeNonAsciiCharacters(string value)
-        {
-            var sb = new StringBuilder();
-            foreach (var c in value)
-            {
-                if (c > 127)
-                {
-                    // This character is too big for ASCII
-                    var encodedValue = "\\u" + ((int)c).ToString("x4");
-                    sb.Append(encodedValue);
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-            return sb.ToString();
-        }
+        
 
         static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
         {
