@@ -14,7 +14,7 @@
         public void ParseValidString()
         {
             const string input = "192.168.2.9";
-            var result = Network.ParseAllIPv4Addresses(input);
+            var result = Network.ParseIPv4Addresses(input);
             var parsedIps = new List<IPAddress>();
             var parsedIp = string.Empty;
 
@@ -37,7 +37,7 @@
         public void ParseAddressFromCidrNotation()
         {
             const string input = "192.168.2.0/24";
-            var result = Network.ParseAllIPv4Addresses(input);
+            var result = Network.ParseIPv4Addresses(input);
             var parsedIps = new List<IPAddress>();
             var parsedIp = string.Empty;
 

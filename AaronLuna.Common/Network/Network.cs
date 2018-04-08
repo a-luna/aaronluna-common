@@ -1,25 +1,24 @@
 ﻿namespace AaronLuna.Common.Network
 {
-	using AaronLuna.Common.Numeric;
-	using Enums;
-    using Http;
-    using Result;
-
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
-    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
+    using Numeric;
+	using Enums;
+    using Http;
+    using Result;
+    
     public static class Network
     {
-        public const string CidrPrivateBlockClassA = "10.0.0.0/8";
-        public const string CidrPrivateBlockClassB = "172.16.0.0/12";
-        public const string CidrPrivateBlockClassC = "192.168.0.0/16";
+        public const string CidrPrivateAddressBlockA = "10.0.0.0/8";
+        public const string CidrPrivateAddressBlockB = "172.16.0.0/12";
+        public const string CidrPrivateAddressBlockC = "192.168.0.0/16";
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
@@ -52,7 +51,7 @@
 
             foreach (var ip in localIps)
             {
-                var result = IpAddressIsInCidrRange(ip.ToString(), cidrMask);
+                var result = IpAddressIsInCidrRange(ip, cidrMask);
                 if (!result.Success) continue;
                 if (!result.Value) continue;
 
@@ -61,15 +60,7 @@
 
             return Result.Fail<IPAddress>(localIpError);
         }
-
-        public static List<IPAddress> GetLocalIPv4AddressList()
-        {
-            var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-
-            return ipHostInfo.AddressList.Select(ip => ip)
-                .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();            
-        }
-
+        
         public static Result<IPAddress> GetLocalIPv4AddressFromInternet()
         {
             IPAddress localIp;
@@ -78,7 +69,11 @@
                 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
                 {
                     socket.Connect("8.8.8.8", 65530);
-                    var endPoint = socket.LocalEndPoint as IPEndPoint;
+                    if (!(socket.LocalEndPoint is IPEndPoint endPoint))
+                    {
+                        return Result.Fail<IPAddress>($"Error occurred casting {socket.LocalEndPoint} to IPEndPoint");
+                    }
+
                     localIp = endPoint.Address;
                 }
             }
@@ -104,10 +99,10 @@
                 : Result.Fail<IPAddress>(conversion.Error);
         }
 
-        public static Result<List<IPAddress>> ParseAllIPv4Addresses(string input)
+        public static Result<List<IPAddress>> ParseIPv4Addresses(string input)
         {
             const string ipV4Pattern =
-                @"((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
+                @"(?:(?:1\d\d|2[0-5][0-5]|2[0-4]\d|0?[1-9]\d|0?0?\d)\.){3}(?:1\d\d|2[0-5][0-5]|2[0-4]\d|0?[1-9]\d|0?0?\d)";
 
             if (string.IsNullOrEmpty(input))
             {
@@ -131,10 +126,12 @@
             }
             catch (RegexMatchTimeoutException ex)
             {
-                return Result.Fail<List<IPAddress>>($"{ex.Message} ({ex.GetType()}) raised in method IpAddressHelper.ParseAllIPv4Addresses");
+                return Result.Fail<List<IPAddress>>($"{ex.Message} ({ex.GetType()}) raised in method IpAddressHelper.ParseIPv4Addresses");
             }
 
-            return ips.Count > 0 ? Result.Ok(ips) : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
+            return ips.Count > 0 
+                ? Result.Ok(ips) 
+                : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
         }
 
 		public static Result<string> ConvertIpAddressToBinary(string ip)
@@ -162,7 +159,7 @@
 
                 if (!i.IsLastIteration(bytes.Length))
 				{
-					s += $" - ";
+					s += " - ";
 				}
             }
 
@@ -185,13 +182,24 @@
 
         // true if ipAddress falls inside the CIDR range, example
         // bool result = IsInCidrRange("192.168.2.3", "192.168.2.0/24"); // result = true
-        public static Result<bool> IpAddressIsInCidrRange(string ipAddress, string cidrMask)
+        public static Result<bool> IpAddressIsInCidrRange(string checkIp, string cidrMask)
         {
-            if (string.IsNullOrEmpty(ipAddress))
+            if (string.IsNullOrEmpty(checkIp))
             {
-                return Result.Fail<bool>($"IP address was null or empty string, {ipAddress}");
+                throw new ArgumentException("Input string must not be null", checkIp);
             }
 
+            var parseIp = ParseIPv4Addresses(checkIp);
+            if (parseIp.Failure)
+            {
+                return Result.Fail<bool>($"Unable to parse IP address from input string {checkIp}");
+            }
+
+            return IpAddressIsInCidrRange(parseIp.Value[0], cidrMask);
+        }
+
+        public static Result<bool> IpAddressIsInCidrRange(IPAddress checkIp, string cidrMask)
+        {
             if (string.IsNullOrEmpty(cidrMask))
             {
                 return Result.Fail<bool>($"CIDR mask was null or empty string, {cidrMask}");
@@ -204,59 +212,72 @@
                     $"cidrMask was not in the correct format:\nExpected: a.b.c.d/n\nActual: {cidrMask}");
             }
 
-            var cidrAddress = parts[0];
-            var cidrNetworkBitCount = parts[1];
-            bool ipIsInRange;
-
-            try
+            var parseIp = ParseIPv4Addresses(cidrMask);
+            if (parseIp.Failure)
             {
-                var ipAddressBytes = BitConverter.ToInt32(IPAddress.Parse(ipAddress).GetAddressBytes(), 0);
-                var cidrAddressBytes = BitConverter.ToInt32(IPAddress.Parse(cidrAddress).GetAddressBytes(), 0);
-                var cidrMaskBytes = IPAddress.HostToNetworkOrder(-1 << (32 - int.Parse(cidrNetworkBitCount)));
+                return Result.Fail<bool>($"Unable to parse IP address from input string {cidrMask}");
+            }
 
-                ipIsInRange = (ipAddressBytes & cidrMaskBytes) == (cidrAddressBytes & cidrMaskBytes);
-            }
-            catch (Exception ex)
+            var cidrAddress = parseIp.Value[0];
+
+            if (!Int32.TryParse(parts[1], out var netmaskBitCount))
             {
-                return Result.Fail<bool>($"{ex.Message} ({ex.GetType()})");
+                return Result.Fail<bool>($"Unable to parse netmask bit count from {cidrMask}");
             }
+
+            if (0 > netmaskBitCount || netmaskBitCount > 32)
+            {
+                return Result.Fail<bool>($"Netmask bit count value of {netmaskBitCount} is invalid, must be in range 0-32");
+            }
+
+            var ipAddressBytes = BitConverter.ToInt32(checkIp.GetAddressBytes(), 0);
+            var cidrAddressBytes = BitConverter.ToInt32(cidrAddress.GetAddressBytes(), 0);
+            var cidrMaskBytes = IPAddress.HostToNetworkOrder(-1 << (32 - netmaskBitCount));
+
+            var ipIsInRange = (ipAddressBytes & cidrMaskBytes) == (cidrAddressBytes & cidrMaskBytes);
 
             return Result.Ok(ipIsInRange);
         }
 
-        public static bool IpAddressIsInPrivateAddressSpace(string ipAddress)
+        public static Result<bool> IpAddressIsInPrivateAddressSpace(string ipAddress)
         {
-            var validateIp = ParseSingleIPv4Address(ipAddress);
+            var parseIp = ParseIPv4Addresses(ipAddress);
+            if (parseIp.Failure)
+            {
+                return Result.Fail<bool>($"Unable to parse IP address from {ipAddress}");
+            }
 
-            return validateIp.Success && IpAddressIsInPrivateAddressSpace(validateIp.Value);
+            var ipIsInPrivateRange = IpAddressIsInPrivateAddressSpace(parseIp.Value[0]);
+
+            return Result.Ok(ipIsInPrivateRange);
         }
 
         public static bool IpAddressIsInPrivateAddressSpace(IPAddress ipAddress)
         {
-            var checkRangeA = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassA);
-            var checkRangeB = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassB);
-            var checkRangeC = IpAddressIsInCidrRange(ipAddress.ToString(), CidrPrivateBlockClassC);
+            var inPrivateBlockA = IpAddressIsInCidrRange(ipAddress, CidrPrivateAddressBlockA).Value;
+            var inPrivateBlockB = IpAddressIsInCidrRange(ipAddress, CidrPrivateAddressBlockB).Value;
+            var inPrivateBlockC = IpAddressIsInCidrRange(ipAddress, CidrPrivateAddressBlockC).Value;
 
-            return checkRangeA.Value || checkRangeB.Value || checkRangeC.Value;
+            return inPrivateBlockA || inPrivateBlockB || inPrivateBlockC;
         }
 
-        public static List<UnicastIPAddressInformation> GetUnicastIPv4AddressInfoForAllNetworkAdapters()
+        public static List<IPAddress> GetLocalIPv4AddressList()
         {
-            var ipv4AddressList = new List<UnicastIPAddressInformation>();
+            var localIps = new List<IPAddress>();
             foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
             {
-                var uniCastIPv4AddressList =
+                var ips =
                     nic.GetIPProperties().UnicastAddresses
-                        .Select(uni => uni)
-                        .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+                        .Select(uni => uni.Address)
+                        .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToList();
 
-                ipv4AddressList.AddRange(uniCastIPv4AddressList);
+                localIps.AddRange(ips);
             }
 
-            return ipv4AddressList;
+            return localIps;
         }
 
-        public static void DisplayUnicastIPv4AddressInfoForAllNetworkAdapters()
+        public static void DisplayLocalIPv4AddressInfo()
         {
             foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -287,8 +308,6 @@
             }
         }
 
-        
-
         static Result<byte[]> ConvertIPv4StringToBytes(string ipv4)
         {
             var digits = ipv4.Trim().Split('.').ToList();
@@ -303,6 +322,11 @@
                 if (!int.TryParse(digits[i], out var parsedInt))
                 {
                     return Result.Fail<byte[]>($"Unable to parse IPv4 address from string: {ipv4}");
+                }
+
+                if (0 > parsedInt || parsedInt > 255)
+                {
+                    return Result.Fail<byte[]>($"{parsedInt} not within required IP address range [0,255]");
                 }
 
                 bytes[i] = (byte)parsedInt;
