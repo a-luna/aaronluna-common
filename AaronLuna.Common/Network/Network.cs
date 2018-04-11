@@ -23,19 +23,27 @@
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
             var getUrlResult = await HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/").ConfigureAwait(false);
+            if (getUrlResult.Failure)
+            {
+                return Result.Fail<IPAddress>(getUrlResult.Error);
+            }
 
-            return getUrlResult.Success
-                ? ParseSingleIPv4Address(getUrlResult.Value)
-                : Result.Fail<IPAddress>(getUrlResult.Error);
+            var parseIpResult = ParseIPv4Addresses(getUrlResult.Value);
+            if (parseIpResult.Failure)
+            {
+                Result.Fail<IPAddress>(parseIpResult.Error);
+            }
+
+            return Result.Ok(parseIpResult.Value[0]);
         }
 
-        public static Result<IPAddress> GetLocalIpAddress(string cidrMask)
+        public static Result<IPAddress> GetLocalIpAddress(string localNetworkCidrIp)
         {
             const string localIpError =
                 "Unable to determine the local IP address for this machine, " +
-                "please ensure that the CIDR mask is correct for your LAN. " +
-                "For example, the correct CIDR mask for IP address 192.168.2.3 " +
-                "would be a string value of \"192.168.2.0/24\"";
+                "please ensure that the CIDR IP address is correct for your LAN. " +
+                "For example, the correct CIDR IP for a Class C network with router" +
+                "IP address set to 192.168.2.1 would be a string value of \"192.168.2.0/24\"";
 
             var acquiredLocalIp = GetLocalIPv4AddressFromInternet();
             if (acquiredLocalIp.Success)
@@ -51,7 +59,7 @@
 
             foreach (var ip in localIps)
             {
-                var result = IpAddressIsInCidrRange(ip, cidrMask);
+                var result = IpAddressIsInRange(ip, localNetworkCidrIp);
                 if (!result.Success) continue;
                 if (!result.Value) continue;
 
@@ -136,13 +144,13 @@
 
 		public static Result<string> ConvertIpAddressToBinary(string ip)
 		{
-			var parseResult = ParseSingleIPv4Address(ip);
+			var parseResult = ParseIPv4Addresses(ip);
             if (parseResult.Failure)
 			{
 				return Result.Fail<string>(parseResult.Error);
 			}
 
-			var binary = ConvertIpAddressToBinary(parseResult.Value);
+			var binary = ConvertIpAddressToBinary(parseResult.Value[0]);
 
 			return Result.Ok(binary);
 		}
@@ -180,9 +188,9 @@
                 : IpAddressSimilarity.AllBytesMatch;
         }
 
-        // true if ipAddress falls inside the CIDR range, example
+        // true if ipAddress falls inside the range defined by cidrIp, example:
         // bool result = IsInCidrRange("192.168.2.3", "192.168.2.0/24"); // result = true
-        public static Result<bool> IpAddressIsInCidrRange(string checkIp, string cidrMask)
+        public static Result<bool> IpAddressIsInRange(string checkIp, string cidrIp)
         {
             if (string.IsNullOrEmpty(checkIp))
             {
@@ -195,34 +203,34 @@
                 return Result.Fail<bool>($"Unable to parse IP address from input string {checkIp}");
             }
 
-            return IpAddressIsInCidrRange(parseIp.Value[0], cidrMask);
+            return IpAddressIsInRange(parseIp.Value[0], cidrIp);
         }
 
-        public static Result<bool> IpAddressIsInCidrRange(IPAddress checkIp, string cidrMask)
+        public static Result<bool> IpAddressIsInRange(IPAddress checkIp, string cidrIp)
         {
-            if (string.IsNullOrEmpty(cidrMask))
+            if (string.IsNullOrEmpty(cidrIp))
             {
-                return Result.Fail<bool>($"CIDR mask was null or empty string, {cidrMask}");
+                return Result.Fail<bool>($"CIDR IP address was null or empty string, {cidrIp}");
             }
-
-            var parts = cidrMask.Split('/');
-            if (parts.Length != 2)
-            {
-                return Result.Fail<bool>(
-                    $"cidrMask was not in the correct format:\nExpected: a.b.c.d/n\nActual: {cidrMask}");
-            }
-
-            var parseIp = ParseIPv4Addresses(cidrMask);
+            
+            var parseIp = ParseIPv4Addresses(cidrIp);
             if (parseIp.Failure)
             {
-                return Result.Fail<bool>($"Unable to parse IP address from input string {cidrMask}");
+                return Result.Fail<bool>($"Unable to parse IP address from input string {cidrIp}");
             }
 
             var cidrAddress = parseIp.Value[0];
 
+            var parts = cidrIp.Split('/');
+            if (parts.Length != 2)
+            {
+                return Result.Fail<bool>(
+                    $"cidrIp was not in the correct format:\nExpected: a.b.c.d/n\nActual: {cidrIp}");
+            }
+
             if (!Int32.TryParse(parts[1], out var netmaskBitCount))
             {
-                return Result.Fail<bool>($"Unable to parse netmask bit count from {cidrMask}");
+                return Result.Fail<bool>($"Unable to parse netmask bit count from {cidrIp}");
             }
 
             if (0 > netmaskBitCount || netmaskBitCount > 32)
@@ -230,11 +238,11 @@
                 return Result.Fail<bool>($"Netmask bit count value of {netmaskBitCount} is invalid, must be in range 0-32");
             }
 
-            var ipAddressBytes = BitConverter.ToInt32(checkIp.GetAddressBytes(), 0);
-            var cidrAddressBytes = BitConverter.ToInt32(cidrAddress.GetAddressBytes(), 0);
+            var checkIpBytes = BitConverter.ToInt32(checkIp.GetAddressBytes(), 0);
+            var cidrIpBytes = BitConverter.ToInt32(cidrAddress.GetAddressBytes(), 0);
             var cidrMaskBytes = IPAddress.HostToNetworkOrder(-1 << (32 - netmaskBitCount));
 
-            var ipIsInRange = (ipAddressBytes & cidrMaskBytes) == (cidrAddressBytes & cidrMaskBytes);
+            var ipIsInRange = (checkIpBytes & cidrMaskBytes) == (cidrIpBytes & cidrMaskBytes);
 
             return Result.Ok(ipIsInRange);
         }
@@ -254,9 +262,9 @@
 
         public static bool IpAddressIsInPrivateAddressSpace(IPAddress ipAddress)
         {
-            var inPrivateBlockA = IpAddressIsInCidrRange(ipAddress, CidrPrivateAddressBlockA).Value;
-            var inPrivateBlockB = IpAddressIsInCidrRange(ipAddress, CidrPrivateAddressBlockB).Value;
-            var inPrivateBlockC = IpAddressIsInCidrRange(ipAddress, CidrPrivateAddressBlockC).Value;
+            var inPrivateBlockA = IpAddressIsInRange(ipAddress, CidrPrivateAddressBlockA).Value;
+            var inPrivateBlockB = IpAddressIsInRange(ipAddress, CidrPrivateAddressBlockB).Value;
+            var inPrivateBlockC = IpAddressIsInRange(ipAddress, CidrPrivateAddressBlockC).Value;
 
             return inPrivateBlockA || inPrivateBlockB || inPrivateBlockC;
         }

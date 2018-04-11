@@ -70,21 +70,21 @@
             var ip6 = "1.1.1.1";
             var ip7 = "71.94.90.29";
 
-            var checkIp1InCidrRange1 = Network.IpAddressIsInCidrRange(ip1, cidrRange1);
-            var checkIp2InCidrRange1 = Network.IpAddressIsInCidrRange(ip2, cidrRange1);
-            var checkIp3InCidrRange1 = Network.IpAddressIsInCidrRange(ip3, cidrRange1);
-            var checkIp4InCidrRange1 = Network.IpAddressIsInCidrRange(ip4, cidrRange1);
-            var checkIp5InCidrRange1 = Network.IpAddressIsInCidrRange(ip5, cidrRange1);
-            var checkIp6InCidrRange1 = Network.IpAddressIsInCidrRange(ip6, cidrRange1);
-            var checkIp7InCidrRange1 = Network.IpAddressIsInCidrRange(ip7, cidrRange1);
+            var checkIp1InCidrRange1 = Network.IpAddressIsInRange(ip1, cidrRange1);
+            var checkIp2InCidrRange1 = Network.IpAddressIsInRange(ip2, cidrRange1);
+            var checkIp3InCidrRange1 = Network.IpAddressIsInRange(ip3, cidrRange1);
+            var checkIp4InCidrRange1 = Network.IpAddressIsInRange(ip4, cidrRange1);
+            var checkIp5InCidrRange1 = Network.IpAddressIsInRange(ip5, cidrRange1);
+            var checkIp6InCidrRange1 = Network.IpAddressIsInRange(ip6, cidrRange1);
+            var checkIp7InCidrRange1 = Network.IpAddressIsInRange(ip7, cidrRange1);
 
-            var checkIp1InCidrRange2 = Network.IpAddressIsInCidrRange(ip1, cidrRange2);
-            var checkIp2InCidrRange2 = Network.IpAddressIsInCidrRange(ip2, cidrRange2);
-            var checkIp3InCidrRange2 = Network.IpAddressIsInCidrRange(ip3, cidrRange2);
-            var checkIp4InCidrRange2 = Network.IpAddressIsInCidrRange(ip4, cidrRange2);
-            var checkIp5InCidrRange2 = Network.IpAddressIsInCidrRange(ip5, cidrRange2);
-            var checkIp6InCidrRange2 = Network.IpAddressIsInCidrRange(ip6, cidrRange2);
-            var checkIp7InCidrRange2 = Network.IpAddressIsInCidrRange(ip7, cidrRange2);
+            var checkIp1InCidrRange2 = Network.IpAddressIsInRange(ip1, cidrRange2);
+            var checkIp2InCidrRange2 = Network.IpAddressIsInRange(ip2, cidrRange2);
+            var checkIp3InCidrRange2 = Network.IpAddressIsInRange(ip3, cidrRange2);
+            var checkIp4InCidrRange2 = Network.IpAddressIsInRange(ip4, cidrRange2);
+            var checkIp5InCidrRange2 = Network.IpAddressIsInRange(ip5, cidrRange2);
+            var checkIp6InCidrRange2 = Network.IpAddressIsInRange(ip6, cidrRange2);
+            var checkIp7InCidrRange2 = Network.IpAddressIsInRange(ip7, cidrRange2);
 
             Assert.IsTrue(checkIp1InCidrRange1.Success);
             Assert.IsTrue(checkIp1InCidrRange1.Value);
