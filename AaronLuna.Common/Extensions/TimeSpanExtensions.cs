@@ -78,7 +78,7 @@
                 }
             }
 
-            return s;
+            return s.TrimStart();
         }
     }
 }

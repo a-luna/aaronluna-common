@@ -13,7 +13,7 @@
         public void VerifyZeroTimeSpan()
         {
             var timeSpan = TimeSpan.Zero.ToFormattedString();
-            Assert.AreEqual(string.Empty, timeSpan);
+            Assert.AreEqual("0ms", timeSpan);
         }
 
         [TestMethod]
@@ -23,7 +23,7 @@
             var dateTime2 = new DateTime(1996, 8, 15);
             var timeSpan = (dateTime2 - dateTime1).ToFormattedString();
 
-            Assert.AreEqual(string.Empty, timeSpan);
+            Assert.AreEqual("0ms", timeSpan);
         }
 
         [TestMethod]

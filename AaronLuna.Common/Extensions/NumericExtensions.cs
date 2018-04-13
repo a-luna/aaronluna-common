@@ -1,4 +1,4 @@
-﻿namespace AaronLuna.Common.Numeric
+﻿namespace AaronLuna.Common.Extensions
 {
     public static class NumericExtensions
     {
