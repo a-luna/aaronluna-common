@@ -1,13 +1,14 @@
-﻿using System.Linq;
-using AaronLuna.Common.Extensions;
-using Microsoft.VisualBasic;
-
-namespace AaronLuna.Common.Console
+﻿namespace AaronLuna.Common.Console
 {
     using System;
+    using System.Linq;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
+
+    using AaronLuna.Common.Extensions;
+
+    using Microsoft.VisualBasic;
 
     public static class ConsoleUtilities
     {
@@ -47,8 +48,8 @@ namespace AaronLuna.Common.Console
         {
             foreach (var i in Enumerable.Range(0, totalChars))
             {
-                startIndex += i;
-                var thisChar = Strings.ChrW(totalChars);
+                var charIndex = startIndex + i;
+                var thisChar = Strings.ChrW(charIndex);
                 Console.Write($"{thisChar} ");
 
                 if ((i + 1) % 10 == 0)
