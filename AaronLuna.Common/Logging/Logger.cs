@@ -19,7 +19,7 @@
         public static int BatchInterval = 1000;
 
         public string Name { get; }
-        
+
         public Logger(Type t) : this(t.Name)
         {
         }
@@ -54,7 +54,7 @@
             Timer.Dispose();
             Tick(null); // Flush.
         }
-        
+
         public void Debug(string message)
         {
             if (IgnoreDebug)
@@ -67,7 +67,7 @@
         {
             Log(Logging.INFO, message);
         }
-        
+
         public void Warn(string message, Exception ex = null)
         {
             Log(Logging.WARN, message, ex);
@@ -141,7 +141,7 @@
                 {
                     Timer.Change(BatchInterval, Timeout.Infinite); // Reset timer for next tick.
                 }
-            }            
+            }
         }
 
         bool CheckListening()

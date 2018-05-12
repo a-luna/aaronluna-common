@@ -13,12 +13,18 @@
     using Extensions;
     using Http;
     using Result;
-    
+
     public static class NetworkUtilities
     {
         public const string CidrPrivateAddressBlockA = "10.0.0.0/8";
         public const string CidrPrivateAddressBlockB = "172.16.0.0/12";
         public const string CidrPrivateAddressBlockC = "192.168.0.0/16";
+
+        public enum AddressType
+        {
+            Private,
+            Public
+        }
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
@@ -37,14 +43,8 @@
             return Result.Ok(parseIpResult.Value[0]);
         }
 
-        public static Result<IPAddress> GetLocalIpAddress(string localNetworkCidrIp)
+        public static Result<IPAddress> GetLocalIPv4Address(string localNetworkCidrIp)
         {
-            const string localIpError =
-                "Unable to determine the local IP address for this machine, " +
-                "please ensure that the CIDR IP address is correct for your LAN. " +
-                "For example, the correct CIDR IP for a Class C network with router" +
-                "IP address set to 192.168.2.1 would be a string value of \"192.168.2.0/24\"";
-
             var acquiredLocalIp = GetLocalIPv4AddressFromInternet();
             if (acquiredLocalIp.Success)
             {
@@ -55,9 +55,9 @@
 
             return matchedLocalIp.Success
                 ? Result.Ok(matchedLocalIp.Value)
-                : Result.Fail<IPAddress>(localIpError);
+                : Result.Fail<IPAddress>("Unable to determine local IP address");
         }
-        
+
         static Result<IPAddress> GetLocalIPv4AddressFromInternet()
         {
             IPAddress localIp;
@@ -162,8 +162,8 @@
                 return Result.Fail<List<IPAddress>>($"{ex.Message} ({ex.GetType()}) raised in method IpAddressHelper.ParseIPv4Addresses");
             }
 
-            return ips.Count > 0 
-                ? Result.Ok(ips) 
+            return ips.Count > 0
+                ? Result.Ok(ips)
                 : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
         }
 
@@ -197,7 +197,7 @@
             {
                 return Result.Fail<bool>(cidrIpNull);
             }
-            
+
             var parseIp = ParseIPv4Addresses(cidrIp);
             if (parseIp.Failure)
             {
@@ -251,6 +251,13 @@
             var inPrivateBlockC = IpAddressIsInRange(ipAddress, CidrPrivateAddressBlockC).Value;
 
             return inPrivateBlockA || inPrivateBlockB || inPrivateBlockC;
+        }
+
+        public static AddressType GetAddressType(IPAddress ipAddress)
+        {
+            return IpAddressIsInPrivateAddressSpace(ipAddress)
+                ? AddressType.Private
+                : AddressType.Public;
         }
 
         public static void DisplayLocalIPv4AddressInfo()
