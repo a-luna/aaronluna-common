@@ -11,7 +11,7 @@
 
     using Result;
 
-    public static class FileCrypt
+    public static class CryptoFiles
     {
         public static async Task<Result> EncryptFile(string filePath, string publicRsaKeyXmlFilePath)
         {
@@ -29,9 +29,14 @@
 
         public static async Task<Result> DecryptFile(string infoXmlFilePath, string privateRsaKeyXmlFilePath)
         {
+            FileInfo encryptedFileInfo;
             try
             {
-                await Task.Factory.StartNew(() => Decrypt(infoXmlFilePath, privateRsaKeyXmlFilePath));
+                var decryptResult = await Task.Factory.StartNew(() => Decrypt(infoXmlFilePath, privateRsaKeyXmlFilePath));
+                if (decryptResult.Success)
+                {
+                    encryptedFileInfo = decryptResult.Value;
+                }
             }
             catch (Exception ex)
             {
@@ -179,7 +184,7 @@
             return encrypted;
         }
 
-        public static byte[] DescryptBytesRsa(byte[] bytes, string privateRsaKeyXml)
+        static byte[] DecryptBytesRsa(byte[] bytes, string privateRsaKeyXml)
         {
             byte[] decrypted;
             using (var rsa = new RSACryptoServiceProvider(2048))
@@ -191,7 +196,7 @@
             return decrypted;
         }
 
-        static void Decrypt(string infoXmlFilePath, string privateRsaKeyXmlFilePath)
+        static Result<FileInfo> Decrypt(string infoXmlFilePath, string privateRsaKeyXmlFilePath)
         {
             var folderPath = Path.GetDirectoryName(infoXmlFilePath);
             var privateRsaKey = ReadRsaKeyXmlFromFile(privateRsaKeyXmlFilePath);
@@ -204,11 +209,11 @@
             var encryptedFilePath = Path.Combine(folderPath, encryptedFileName);
 
             var aesKeyElement = xmlDoc.Root.XPathSelectElement("./DataEncryption/AESEncryptedKeyValue/Key");
-            byte[] aesKey = DescryptBytesRsa(FromBase64String(aesKeyElement.Value), privateRsaKey);
+            byte[] aesKey = DecryptBytesRsa(FromBase64String(aesKeyElement.Value), privateRsaKey);
 
             var aesIvElement = xmlDoc.Root.XPathSelectElement("./DataEncryption/AESEncryptedKeyValue/IV");
-            byte[] aesIv = DescryptBytesRsa(Convert.FromBase64String(aesIvElement.Value), privateRsaKey);
-
+            byte[] aesIv = DecryptBytesRsa(FromBase64String(aesIvElement.Value), privateRsaKey);
+            
             using (var aes = new AesCryptoServiceProvider())
             {
                 aes.KeySize = 128;
@@ -223,6 +228,18 @@
                     fsEncrypted.CopyTo(cs);
                 }
             }
+
+            var dataSignatureElement = xmlDoc.Root.XPathSelectElement("./DataSignature/Value");
+            var encryptedFileSignatureFromFile = DecryptBytesRsa(FromBase64String(dataSignatureElement.Value), privateRsaKey);
+
+            var dataSigEncryptedKeyElement = xmlDoc.Root.XPathSelectElement("./DataSignature/EncryptedKey");
+            var signatureKey = DecryptBytesRsa(FromBase64String(dataSigEncryptedKeyElement.Value), privateRsaKey);
+
+            var encryptedFileSignatureCalculated = CalculateSha256(encryptedFilePath, signatureKey);
+
+            return encryptedFileSignatureCalculated.Equals(encryptedFileSignatureFromFile)
+                ? Result.Ok(new FileInfo(encryptedFilePath))
+                : Result.Fail<FileInfo>("Signature calculated from encrypted file does not match the value in the info XML file.");
         }
     }
 }
