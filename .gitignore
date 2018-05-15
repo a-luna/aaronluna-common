@@ -33,6 +33,15 @@ Temporary Items
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+CodeGraphData/
+DevTracker*
+*.dt
+
+# Code coverage files
+coverage-html
+coverage.json
+coverage-hits.txt
+
 # User-specific files
 *.suo
 *.user
