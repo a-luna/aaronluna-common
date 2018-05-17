@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <Folder Include="Http\" />
-    <Folder Include="IO\" />
     <Folder Include="Result\" />
   </ItemGroup>
 
