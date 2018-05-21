@@ -25,7 +25,7 @@
         public string ItemText { get; set; }
         public bool ReturnToParent { get; set; }
         public string MenuText { get; set; }
-        public List<ICommand> MenuOptions { get; set; }        
+        public List<ICommand> MenuOptions { get; set; }
 
         public async Task<Result> ExecuteAsync()
         {

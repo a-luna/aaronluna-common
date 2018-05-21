@@ -1,7 +1,7 @@
 ﻿namespace AaronLuna.Common.Logging
 {
     using System;
-    
+
     public static class Logging
     {
         public const string DEBUG = "DEBUG";

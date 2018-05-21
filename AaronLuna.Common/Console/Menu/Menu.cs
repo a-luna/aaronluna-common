@@ -32,7 +32,6 @@
 
         public static void DisplayMenu(string menuText, List<ICommand> menuOptions)
         {
-            Console.Clear();
             Console.WriteLine(menuText);
             Console.WriteLine();
             foreach (var i in Enumerable.Range(0, menuOptions.Count))
