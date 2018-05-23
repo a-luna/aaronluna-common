@@ -2,9 +2,9 @@
 {
     using System.Collections.Generic;
 
-    public interface IMenu : ICommand
+    public interface IMenu : IMenuItem
     {
         string MenuText { get; set; }
-        List<ICommand> MenuOptions { get; set; }
+        List<IMenuItem> MenuItems { get; set; }
     }
 }

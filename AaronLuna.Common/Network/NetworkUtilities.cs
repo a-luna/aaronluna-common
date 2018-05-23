@@ -28,19 +28,28 @@
 
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
-            var getUrlResult = await HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/").ConfigureAwait(false);
+            Result<string> getUrlResult;
+
+            var getUrlTask = Task.Run(() => HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/"));
+            if (getUrlTask == await Task.WhenAny(getUrlTask, Task.Delay(3000)))
+            {
+                getUrlResult = await getUrlTask;
+            }
+            else
+            {
+                getUrlResult = Result.Fail<string>("HTTP Request for public IP address timed out.");
+            }
+
             if (getUrlResult.Failure)
             {
                 return Result.Fail<IPAddress>(getUrlResult.Error);
             }
 
             var parseIpResult = ParseIPv4Addresses(getUrlResult.Value);
-            if (parseIpResult.Failure)
-            {
-                Result.Fail<IPAddress>(parseIpResult.Error);
-            }
 
-            return Result.Ok(parseIpResult.Value[0]);
+            return parseIpResult.Success
+                ? Result.Ok(parseIpResult.Value[0])
+                : Result.Fail<IPAddress>(parseIpResult.Error);
         }
 
         public static Result<IPAddress> GetLocalIPv4Address(string localNetworkCidrIp)
@@ -164,7 +173,7 @@
 
             return ips.Count > 0
                 ? Result.Ok(ips)
-                : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addreses");
+                : Result.Fail<List<IPAddress>>("Input string did not contain any valid IPv4 addresses");
         }
 
         // true if ipAddress falls inside the range defined by cidrIp, example:

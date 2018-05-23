@@ -3,13 +3,12 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     using Result;
 
     public static class Menu
     {
-        public static ICommand GetUserSelection(string menuText, List<ICommand> menuOptions)
+        public static IMenuItem GetUserSelection(string menuText, List<IMenuItem> menuOptions)
         {
             var userSelection = 0;
             while (userSelection == 0)
@@ -30,10 +29,9 @@
             return menuOptions[userSelection - 1];
         }
 
-        public static void DisplayMenu(string menuText, List<ICommand> menuOptions)
+        public static void DisplayMenu(string menuText, List<IMenuItem> menuOptions)
         {
-            Console.WriteLine(menuText);
-            Console.WriteLine();
+            Console.WriteLine($"{menuText}{Environment.NewLine}");
             foreach (var i in Enumerable.Range(0, menuOptions.Count))
             {
                 Console.WriteLine($"{i + 1}. {menuOptions[i].ItemText}");

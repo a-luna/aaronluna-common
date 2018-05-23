@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace AaronLuna.Common.Console.Menu
+﻿namespace AaronLuna.Common.Console.Menu
 {
     using System.Threading.Tasks;
     using Result;
 
-    public interface ICommand
+    public interface IMenuItem
     {
         string ItemText { get; set; }
         bool ReturnToParent { get; set; }

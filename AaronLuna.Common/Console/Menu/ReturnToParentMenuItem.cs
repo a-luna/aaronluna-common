@@ -4,13 +4,11 @@
 
     using Result;
 
-    public class ReturnToParentCommand : ICommand
+    public class ReturnToParentMenuItem : IMenuItem
     {
-        public ReturnToParentCommand() { }
-
-        public ReturnToParentCommand(string itemText, bool returnToParent)
+        public ReturnToParentMenuItem(string itemText)
         {
-            ReturnToParent = returnToParent;
+            ReturnToParent = true;
             ItemText = itemText;
         }
 

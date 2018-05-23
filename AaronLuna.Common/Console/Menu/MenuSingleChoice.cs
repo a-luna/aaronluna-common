@@ -5,26 +5,26 @@
 
     using Result;
 
-    public abstract class MenuSingleChoice : ICommand
+    public abstract class MenuSingleChoice : IMenu
     {
         protected MenuSingleChoice() { }
 
-        protected MenuSingleChoice(string itemText, List<ICommand> menuOptions)
+        protected MenuSingleChoice(string itemText, List<IMenuItem> menuOptions)
         {
             ReturnToParent = true;
             ItemText = itemText;
-            MenuOptions = menuOptions;
+            MenuItems = menuOptions;
         }
 
         public string ItemText { get; set; }
         public bool ReturnToParent { get; set; }
         public string MenuText { get; set; }
-        public List<ICommand> MenuOptions { get; set; }
+        public List<IMenuItem> MenuItems { get; set; }
 
-        public async Task<Result> ExecuteAsync()
+        public Task<Result> ExecuteAsync()
         {
-            var selectedOption = Menu.GetUserSelection(MenuText, MenuOptions);
-            return await selectedOption.ExecuteAsync().ConfigureAwait(false);
+            var selectedOption = Menu.GetUserSelection(MenuText, MenuItems);
+            return selectedOption.ExecuteAsync();
         }
     }
 }

@@ -6,26 +6,19 @@
 
     using Result;
 
-    public abstract class MenuLoop : ICommand
+    public abstract class MenuLoop : IMenu
     {
         protected MenuLoop()
         {
             ReturnToParent = false;
             ItemText = string.Empty;
-            MenuOptions = new List<ICommand>();
-        }
-
-        protected MenuLoop(string itemText, List<ICommand> menuOptions)
-        {
-            ReturnToParent = false;
-            ItemText = itemText;
-            MenuOptions = menuOptions;
+            MenuItems = new List<IMenuItem>();
         }
 
         public string ItemText { get; set; }
         public bool ReturnToParent { get; set; }
         public string MenuText { get; set; }
-        public List<ICommand> MenuOptions { get; set; }
+        public List<IMenuItem> MenuItems { get; set; }
 
         public async Task<Result> ExecuteAsync()
         {
@@ -34,11 +27,12 @@
 
             while (!exit)
             {
-                var selectedOption = Menu.GetUserSelection(MenuText, MenuOptions);
-                exit = selectedOption.ReturnToParent;
-                result = await selectedOption.ExecuteAsync().ConfigureAwait(false);
+                var menuItem = Menu.GetUserSelection(MenuText, MenuItems);
+                result = await menuItem.ExecuteAsync().ConfigureAwait(false);
 
+                exit = menuItem.ReturnToParent;
                 if (result.Success) continue;
+
                 Console.WriteLine(result.Error);
                 exit = true;
             }

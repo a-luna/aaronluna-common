@@ -2,17 +2,15 @@
 {
     using System;
     using System.Linq;
-    using System.Runtime.InteropServices;
     using System.Text;
-    using System.Threading;
 
-    using AaronLuna.Common.Extensions;
+    using Extensions;
 
     using Microsoft.VisualBasic;
 
     public static class ConsoleUtilities
     {
-        const string nums =
+        static readonly string charIndices =
             "0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9";
 
         public static void WriteCharSetToConsole(Encoding outputEncoding, int charCount)
@@ -21,7 +19,7 @@
             var charIndex = 0;
 
             Console.WriteLine($"{Environment.NewLine}({charIndex})");
-            Console.WriteLine(nums);
+            Console.WriteLine(charIndices);
 
             if (charCount < 50)
             {
@@ -35,7 +33,7 @@
             if (excessChars > 0)
             {
                 Console.WriteLine($"{Environment.NewLine}({charIndex + 1})");
-                Console.WriteLine(nums);
+                Console.WriteLine(charIndices);
 
                 PrintLessThanFiftyChars(charIndex, excessChars);
             }
@@ -86,27 +84,10 @@
                 if (i.IsLastIteration(totalLoops)) break;
 
                 Console.WriteLine($"{Environment.NewLine}({charIndex + 1})");
-                Console.WriteLine(nums);
+                Console.WriteLine(charIndices);
             }
 
             return charIndex;
         }
-
-        //[DllImport("User32.Dll", EntryPoint = "PostMessageA")]
-        //static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
-
-        //const int VK_RETURN = 0x0D;
-        //const int WM_KEYDOWN = 0x100;
-
-        //public static void Execute()
-        //{
-        //    ThreadPool.QueueUserWorkItem(_ =>
-        //    {
-        //        Thread.Sleep(500);
-
-        //        var hWnd = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
-        //        PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, 0);
-        //    });
-        //}
     }
 }
