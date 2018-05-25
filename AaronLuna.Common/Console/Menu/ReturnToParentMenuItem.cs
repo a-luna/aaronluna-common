@@ -15,9 +15,13 @@
         public string ItemText { get; set; }
         public bool ReturnToParent { get; set; }
 
-        public async Task<Result> ExecuteAsync()
+        public Task<Result> ExecuteAsync()
         {
-            await Task.Delay(1);
+            return Task.Factory.StartNew(Execute);
+        }
+
+        Result Execute()
+        {
             return Result.Ok();
         }
     }

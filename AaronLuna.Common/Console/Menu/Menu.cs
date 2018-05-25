@@ -8,15 +8,15 @@
 
     public static class Menu
     {
-        public static IMenuItem GetUserSelection(string menuText, List<IMenuItem> menuOptions)
+        public static IMenuItem GetUserSelection(string menuText, List<IMenuItem> menuItems)
         {
             var userSelection = 0;
             while (userSelection == 0)
             {
-                DisplayMenu(menuText, menuOptions);
+                DisplayMenu(menuText, menuItems);
                 var input = Console.ReadLine();
 
-                var validationResult = ValidateUserInput(input, menuOptions.Count);
+                var validationResult = ValidateUserInput(input, menuItems.Count);
                 if (validationResult.Failure)
                 {
                     Console.WriteLine(validationResult.Error);
@@ -26,15 +26,15 @@
                 userSelection = validationResult.Value;
             }
 
-            return menuOptions[userSelection - 1];
+            return menuItems[userSelection - 1];
         }
 
-        public static void DisplayMenu(string menuText, List<IMenuItem> menuOptions)
+        public static void DisplayMenu(string menuText, List<IMenuItem> menuItems)
         {
             Console.WriteLine($"{menuText}{Environment.NewLine}");
-            foreach (var i in Enumerable.Range(0, menuOptions.Count))
+            foreach (var i in Enumerable.Range(0, menuItems.Count))
             {
-                Console.WriteLine($"{i + 1}. {menuOptions[i].ItemText}");
+                Console.WriteLine($"{i + 1}. {menuItems[i].ItemText}");
             }
         }
 
