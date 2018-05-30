@@ -10,6 +10,8 @@
         public const double OneMB = 1024 * 1024;
         public const double OneGB = 1024 * 1024 * 1024;
 
+        static object _file = new object();
+
         public static Result DeleteFileIfAlreadyExists(string filePath)
         {
             try
@@ -34,13 +36,24 @@
         {
             try
             {
-                using (var fs = new FileStream(filePath, FileMode.Append))
-                using (var bw = new BinaryWriter(fs))
+                lock (_file)
                 {
-                    bw.Write(buffer, 0, length);
+                    using (var fs = new FileStream(
+                        filePath,
+                        FileMode.Append,
+                        FileAccess.Write,
+                        FileShare.None))
+                    using (var bw = new BinaryWriter(fs))
+                    {
+                        bw.Write(buffer, 0, length);
+                    }
                 }
             }
             catch (UnauthorizedAccessException ex)
+            {
+                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+            }
+            catch (IOException ex)
             {
                 return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
             }
