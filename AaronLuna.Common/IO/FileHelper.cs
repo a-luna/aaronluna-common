@@ -16,13 +16,16 @@
         {
             try
             {
-                var fi = new FileInfo(filePath);
-                if (!fi.Exists)
+                lock (_file)
                 {
-                    return Result.Ok();
-                }
+                    var fi = new FileInfo(filePath);
+                    if (!fi.Exists)
+                    {
+                        return Result.Ok();
+                    }
 
-                fi.Delete();
+                    fi.Delete();
+                }
             }
             catch (IOException ex)
             {
@@ -51,38 +54,16 @@
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
             }
             catch (IOException ex)
             {
-                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
             }
 
             return Result.Ok();
         }
-
-        public static string GetTransferRate(TimeSpan elapsed, long bytesReceived)
-        {
-            if (elapsed == TimeSpan.MinValue || bytesReceived == 0)
-            {
-                return string.Empty;
-            }
-
-            var elapsedMilliseconds = elapsed.Ticks / (double) 10_000;
-            var bytesPerSecond = (bytesReceived * 1000) / elapsedMilliseconds;
-            var kilobytesPerSecond = bytesPerSecond / 1024;
-            var megabytesPerSecond = kilobytesPerSecond / 1024;
-
-            if (megabytesPerSecond > 1)
-            {
-                return $"{megabytesPerSecond:F1} MB/s";
-            }
-
-            return kilobytesPerSecond > 1
-                ? $"{kilobytesPerSecond:F1} KB/s"
-                : $"{bytesPerSecond:F1} bytes/s";
-        }
-
+        
         public static string FileSizeToString(long fileSizeInBytes)
         {
             if (fileSizeInBytes > OneGB)

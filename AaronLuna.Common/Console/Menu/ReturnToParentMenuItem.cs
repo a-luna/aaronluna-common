@@ -1,5 +1,6 @@
 ﻿namespace AaronLuna.Common.Console.Menu
 {
+    using System;
     using System.Threading.Tasks;
 
     using Result;
@@ -17,7 +18,7 @@
 
         public Task<Result> ExecuteAsync()
         {
-            return Task.Factory.StartNew(Execute);
+            return Task.Run((Func<Result>) Execute);
         }
 
         Result Execute()
