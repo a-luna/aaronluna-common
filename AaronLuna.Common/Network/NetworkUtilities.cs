@@ -300,6 +300,55 @@
             }
         }
 
+        public static Result<string> AttemptToDetermineLanCidrIp()
+        {
+            var ethernetAdapters = NetworkInterface.GetAllNetworkInterfaces().Select(a => a)
+                .Where(a => a.Name.Contains("ethernet", StringComparison.OrdinalIgnoreCase) ||
+                            a.Description.Contains("ethernet", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (ethernetAdapters.Count != 1)
+            {
+                return Result.Fail<string>("More than one ethernet adapters found, unable to determine CIDR IP");
+            }
+
+            var ipInfoList = ethernetAdapters[0].GetIPProperties().UnicastAddresses.Select(ipInfo => ipInfo)
+                .Where(ipInfo => ipInfo.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+
+            if (ipInfoList.Count != 1)
+            {
+                var adapterName = ethernetAdapters[0].Name;
+                var errorMesage =
+                    $"More than one IPv4 address is associated with {adapterName}, unable to determine CIDR IP";
+
+                return Result.Fail<string>(errorMesage);
+            }
+            
+            var ipAddressBytes = ipInfoList[0].Address.GetAddressBytes();
+            var networkBitCount = ipInfoList[0].PrefixLength;
+            var networkIdBytes = new byte[4];
+
+            foreach (var i in Enumerable.Range(0, ipAddressBytes.Length))
+            {
+                var byteArray = Convert.ToString(ipAddressBytes[i], 2).PadLeft(8, '0').ToCharArray();
+                foreach (var j in Enumerable.Range(0, byteArray.Length))
+                {
+                    var bitNumber = i * 8 + j + 1;
+                    if (bitNumber > networkBitCount)
+                    {
+                        byteArray[j] = '0';
+                    }
+                }
+
+                var byteString = new string(byteArray);
+                networkIdBytes[i] = Convert.ToByte(byteString, 2);
+            }
+
+            var networkId = new IPAddress(networkIdBytes);
+            var cidrIp = $"{networkId}/{networkBitCount}";
+
+            return Result.Ok(cidrIp);
+        }
+
         public static Result<string> ConvertIpAddressToBinary(string ip)
         {
             var parseResult = ParseIPv4Addresses(ip);

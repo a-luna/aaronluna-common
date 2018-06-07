@@ -1,4 +1,7 @@
-﻿namespace AaronLuna.Common.IO
+﻿using System.Linq;
+using System.Security;
+
+namespace AaronLuna.Common.IO
 {
     using Result;
     using System;
@@ -6,78 +9,108 @@
 
     public static class FileHelper
     {
-        public const double OneKB = 1024;
-        public const double OneMB = 1024 * 1024;
-        public const double OneGB = 1024 * 1024 * 1024;
+        public const double OneKb = 1024;
+        public const double OneMb = 1024 * 1024;
+        public const double OneGb = 1024 * 1024 * 1024;
 
-        static object _file = new object();
+        static readonly object File = new object();
 
-        public static Result DeleteFileIfAlreadyExists(string filePath)
+        public static Result DeleteFileIfAlreadyExists(string filePath, int maxAttempts)
         {
-            try
+            foreach (var attempt in Enumerable.Range(0, maxAttempts))
             {
-                lock (_file)
+                try
                 {
-                    var fi = new FileInfo(filePath);
-                    if (!fi.Exists)
+                    lock (File)
                     {
-                        return Result.Ok();
-                    }
+                        var fi = new FileInfo(filePath);
+                        if (!fi.Exists)
+                        {
+                            return Result.Ok();
+                        }
 
-                    fi.Delete();
+                        fi.Delete();
+                    }
                 }
-            }
-            catch (IOException ex)
-            {
-                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+                catch (IOException ex)
+                {
+                    if (attempt < maxAttempts) continue;
+                    return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+                }
+                catch (SecurityException ex)
+                {
+                    return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.DeleteFileIfAlreadyExists)");
+                }
+                catch (Exception ex)
+                {
+                    if (attempt < maxAttempts) continue;
+                    return Result.Fail<int>($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
+                }
             }
 
             return Result.Ok();
         }
 
-        public static Result WriteBytesToFile(string filePath, byte[] buffer, int length)
+        public static Result<int> WriteBytesToFile(string filePath, byte[] buffer, int length, int maxAttempts)
         {
-            try
+            var count = 0;
+            foreach (var attempt in Enumerable.Range(0, maxAttempts))
             {
-                lock (_file)
+                try
                 {
-                    using (var fs = new FileStream(
-                        filePath,
-                        FileMode.Append,
-                        FileAccess.Write,
-                        FileShare.None))
-                    using (var bw = new BinaryWriter(fs))
+                    lock (File)
                     {
-                        bw.Write(buffer, 0, length);
+                        using (var fs = new FileStream(
+                            filePath,
+                            FileMode.Append,
+                            FileAccess.Write,
+                            FileShare.None))
+                        using (var bw = new BinaryWriter(fs))
+                        {
+                            bw.Write(buffer, 0, length);
+                        }
                     }
+
+                    count = attempt;
+                    break;
+                }
+                catch (IOException ex)
+                {
+                    if (attempt < maxAttempts) continue;
+                    return Result.Fail<int>($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    return Result.Fail<int>($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
+                }
+                catch (Exception ex)
+                {
+                    if (attempt < maxAttempts) continue;
+                    return Result.Fail<int>($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
                 }
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
-            }
-            catch (IOException ex)
-            {
-                return Result.Fail($"{ex.Message} ({ex.GetType()} raised in method FileHelper.WriteBytesToFile)");
-            }
 
-            return Result.Ok();
+            return Result.Ok(count);
         }
         
         public static string FileSizeToString(long fileSizeInBytes)
         {
-            if (fileSizeInBytes > OneGB)
+            if (fileSizeInBytes > OneGb)
             {
-                return $"{fileSizeInBytes / OneGB:F2} GB";
+                return $"{fileSizeInBytes / OneGb:F2} GB";
             }
 
-            if (fileSizeInBytes > OneMB)
+            if (fileSizeInBytes > OneMb)
             {
-                return $"{fileSizeInBytes / OneMB:F2} MB";
+                return $"{fileSizeInBytes / OneMb:F2} MB";
             }
 
-            return fileSizeInBytes > OneKB
-                ? $"{fileSizeInBytes / OneKB:F2} KB"
+            return fileSizeInBytes > OneKb
+                ? $"{fileSizeInBytes / OneKb:F2} KB"
                 : $"{fileSizeInBytes} bytes";
         }
     }
