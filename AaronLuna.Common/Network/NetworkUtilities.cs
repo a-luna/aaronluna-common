@@ -328,49 +328,52 @@
 
         }
 
-        static List<UnicastIPAddressInformationCollection> GetUnixUnicastAddressInfoList()
+        static List<UnicastIPAddressInformation> GetUnixUnicastAddressInfoList()
         {
-            return NetworkInterface.GetAllNetworkInterfaces().Select(nic => nic)
+            var addressInfoList = NetworkInterface.GetAllNetworkInterfaces().Select(nic => nic)
                 .Where(nic => nic.Name.StartsWith("en", StringComparison.Ordinal))
                 .Select(nic => nic.GetIPProperties().UnicastAddresses)
                 .Where(uni => uni.Any()).ToList();
+
+            var ipV4List = new List<UnicastIPAddressInformation>();
+            foreach (var coll in addressInfoList)
+            {
+                var ips = coll.Select(ip => ip).Where(ip => ip.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+                ipV4List.AddRange(ips);
+            }
+
+            return ipV4List;
         }
 
-        static List<UnicastIPAddressInformationCollection> GetWindowsUnicastAddressInfoList()
+        static List<UnicastIPAddressInformation> GetWindowsUnicastAddressInfoList()
         {
-            return NetworkInterface.GetAllNetworkInterfaces().Select(a => a)
+            var addressInfoList = NetworkInterface.GetAllNetworkInterfaces().Select(a => a)
                 .Where(a => a.Name.Contains("ethernet", StringComparison.OrdinalIgnoreCase) ||
                             a.Description.Contains("ethernet", StringComparison.OrdinalIgnoreCase))
                 .Select(nic => nic.GetIPProperties().UnicastAddresses)
                 .Where(uni => uni.Any()).ToList();
-        }
-        
-        static Result<string> GetCidrIpFromWindowsIpAddressInformation(UnicastIPAddressInformationCollection addressInfoCollection)
-        {
-            var ipInfoList = addressInfoCollection.Select(uni => uni)
-                .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
 
-            if (ipInfoList.Count == 0 || ipInfoList.Count > 1)
+            var ipV4List = new List<UnicastIPAddressInformation>();
+            foreach (var coll in addressInfoList)
             {
-                return Result.Fail<string>("Unable to determine CIDR IP from available network adapter information");
+                var ips = coll.Select(ip => ip).Where(ip => ip.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+                ipV4List.AddRange(ips);
             }
 
-            var ipAddress = ipInfoList[0].Address;
-            var networkBitCount = ipInfoList[0].PrefixLength;
+            return ipV4List;
+        }
+
+        static Result<string> GetCidrIpFromWindowsIpAddressInformation(UnicastIPAddressInformation ipInfo)
+        {
+            var ipAddress = ipInfo.Address;
+            var networkBitCount = ipInfo.PrefixLength;
 
             return Result.Ok(GetCidrIpFromIpAddressAndNetworkBitCount(ipAddress, networkBitCount));
         }
 
-        static Result<string> GetCidrIpFromUnixIpAddressInformation(
-            UnicastIPAddressInformationCollection addressInfoCollection)
+        static Result<string> GetCidrIpFromUnixIpAddressInformation(UnicastIPAddressInformation ipInfo)
         {
-            if (addressInfoCollection.Count == 0 || addressInfoCollection.Count > 1)
-            {
-                return Result.Fail<string>("Unable to determine CIDR IP from available network adapter information");
-            }
-
-            var addressInfo = addressInfoCollection[0];
-            var parseIpv4 = ParseSingleIPv4Address(addressInfo.Address.ToString());
+            var parseIpv4 = ParseSingleIPv4Address(ipInfo.Address.ToString());
             if (parseIpv4.Failure)
             {
                 return Result.Fail<string>("Unable to determine CIDR IP from available network adapter information");
@@ -378,7 +381,7 @@
 
             var ipAddress = parseIpv4.Value;
 
-            var parseIpMask = ParseSingleIPv4Address(addressInfo.IPv4Mask.ToString());
+            var parseIpMask = ParseSingleIPv4Address(ipInfo.IPv4Mask.ToString());
             if (parseIpMask.Failure)
             {
                 return Result.Fail<string>("Unable to determine CIDR IP from available network adapter information");
@@ -427,6 +430,7 @@
                     if (bit == '0')
                     {
                         firstZeroEncountered = true;
+                        zerosCount++;
                     }
                 }
                 else
@@ -474,9 +478,7 @@
             }
 
             var networkId = new IPAddress(networkIdBytes);
-            var cidrIp = $"{networkId}/{networkBitCount}";
-
-            return cidrIp;
+            return $"{networkId}/{networkBitCount}";
         }
 
         public static Result<string> ConvertIpAddressToBinary(string ip, bool separateBytes)
@@ -500,10 +502,10 @@
             foreach (var i in Enumerable.Range(0, bytes.Length))
             {
                 var oneByte = Convert.ToString(bytes[i], 2).PadLeft(8, '0');
-                s += oneByte.Insert(4, " ");
+                s += oneByte;
 
                 if (!separateBytes) continue;
-                
+
                 if (!i.IsLastIteration(bytes.Length))
                 {
                     s += " - ";
