@@ -52,7 +52,7 @@
 
             if (0 >= parsedNum || parsedNum > rangeMax)
             {
-                return Result.Fail<int>($"{parsedNum} is not within allowed range {1}-{rangeMax}");
+                return Result.Fail<int>($"{parsedNum} is not within allowed range 1-{rangeMax}");
             }
 
             return Result.Ok(parsedNum);

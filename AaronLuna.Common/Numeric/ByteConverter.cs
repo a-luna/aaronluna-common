@@ -19,24 +19,24 @@ namespace AaronLuna.Common.Numeric
             return FormatListofHexStringsForDisplay(hexList, bytesPerLine);
         }
 
-        static List<string> ConvertBytesToListOfHexStrings(byte[] bytes)
+        static List<string> ConvertBytesToListOfHexStrings(IEnumerable<byte> bytes)
         {
             var byteList = bytes.ToList();
             byteList.Reverse();
 
-            var hexBytes = new List<string>();
+            var byteStrings = new List<string>();
             foreach (var b in byteList)
             {
-                if (Int32.TryParse(b.ToString(), out int h))
+                if (int.TryParse(b.ToString(), out var h))
                 {
-                    hexBytes.Add($"{h:X2}");
+                    byteStrings.Add($"{h:X2}");
                 }
             }
 
-            return hexBytes;
+            return byteStrings;
         }
 
-        static string FormatListofHexStringsForDisplay(List<string> hexList, int bytesPerLine)
+        static string FormatListofHexStringsForDisplay(IReadOnlyList<string> hexList, int bytesPerLine)
         {
             var hex = string.Empty;
             var lineCount = hexList.Count / bytesPerLine;
@@ -60,10 +60,10 @@ namespace AaronLuna.Common.Numeric
                 }
             }
 
-            foreach (var i in Enumerable.Range(0, remainderCount))
-            {
-                hex += $"{hexList[lineCount * bytesPerLine + i]} ";
-            }
+            hex =
+                Enumerable.Range(0, remainderCount).Aggregate(
+                    hex,
+                    (current, i) => current + $"{hexList[lineCount * bytesPerLine + i]} ");
 
             return hex.Trim();
         }

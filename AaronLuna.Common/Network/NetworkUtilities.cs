@@ -271,6 +271,8 @@
 
         public static void DisplayLocalIPv4AddressInfo()
         {
+            var platform = Environment.OSVersion.Platform.ToString();
+
             foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
             {
                 var adapterProperties = adapter.GetIPProperties();
@@ -280,33 +282,42 @@
                         .Select(uni => uni)
                         .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
 
-                if (uniCast.Count > 0)
+                if (uniCast.Count == 0) continue;
+
+                Console.WriteLine($"Adapter Name....................: {adapter.Name}");
+                Console.WriteLine($"Description.....................: {adapter.Description}");
+                foreach (var uni in uniCast)
                 {
-                    Console.WriteLine($"Adapter Name....................: {adapter.Name}");
-                    Console.WriteLine($"Description.....................: {adapter.Description}");
-                    foreach (var uni in uniCast)
-                    {
-                        Console.WriteLine($"  Unicast Address...............: {uni.Address}");
-                        Console.WriteLine($"    IPv4 Mask...................: {uni.IPv4Mask}");
-                        Console.WriteLine($"    Prefix Length...............: {uni.PrefixLength}");
-                        Console.WriteLine($"    Prefix Origin...............: {uni.PrefixOrigin}");
-                        Console.WriteLine($"    Suffix Origin...............: {uni.SuffixOrigin}");
-                        Console.WriteLine($"    Duplicate Address Detection : {uni.DuplicateAddressDetectionState}");
-                        Console.WriteLine($"    DNS Eligible................: {uni.IsDnsEligible}");
-                        Console.WriteLine($"    Transient...................: {uni.IsTransient}");
-                    }
-                    Console.WriteLine();
+                    Console.WriteLine($"  Unicast Address...............: {uni.Address}");
+                    Console.WriteLine($"    IPv4 Mask...................: {uni.IPv4Mask}");
+                    if (!platform.Contains("win", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    Console.WriteLine($"    Prefix Length...............: {uni.PrefixLength}");
+                    Console.WriteLine($"    Prefix Origin...............: {uni.PrefixOrigin}");
+                    Console.WriteLine($"    Suffix Origin...............: {uni.SuffixOrigin}");
+                    Console.WriteLine($"    Duplicate Address Detection : {uni.DuplicateAddressDetectionState}");
+                    Console.WriteLine($"    DNS Eligible................: {uni.IsDnsEligible}");
+                    Console.WriteLine($"    Transient...................: {uni.IsTransient}");
                 }
+                Console.WriteLine();
+
             }
         }
 
         public static Result<string> AttemptToDetermineLanCidrIp()
         {
-            var ethernetAdapters = NetworkInterface.GetAllNetworkInterfaces().Select(a => a)
-                .Where(a => a.Name.Contains("ethernet", StringComparison.OrdinalIgnoreCase) ||
-                            a.Description.Contains("ethernet", StringComparison.OrdinalIgnoreCase)).ToList();
+            var platform = Environment.OSVersion.Platform.ToString();
 
-            if (ethernetAdapters.Count != 1)
+            var ethernetAdapters = platform.Contains("win", StringComparison.OrdinalIgnoreCase)
+                ? GetWindowsNetworkInterfaceList()
+                : GetUnixNetworkInterfaceList();
+
+            if (ethernetAdapters.Count == 0)
+            {
+                return Result.Fail<string>("No ethernet adapters found, unable to determine CIDR IP");
+            }
+
+            if (ethernetAdapters.Count > 1)
             {
                 return Result.Fail<string>("More than one ethernet adapters found, unable to determine CIDR IP");
             }
@@ -314,17 +325,33 @@
             var ipInfoList = ethernetAdapters[0].GetIPProperties().UnicastAddresses.Select(ipInfo => ipInfo)
                 .Where(ipInfo => ipInfo.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
 
-            if (ipInfoList.Count != 1)
-            {
-                var adapterName = ethernetAdapters[0].Name;
-                var errorMesage =
-                    $"More than one IPv4 address is associated with {adapterName}, unable to determine CIDR IP";
+            if (ipInfoList.Count == 1) return Result.Ok(GetCidrIpFromIpAddressInformation(ipInfoList[0]));
 
-                return Result.Fail<string>(errorMesage);
-            }
-            
-            var ipAddressBytes = ipInfoList[0].Address.GetAddressBytes();
-            var networkBitCount = ipInfoList[0].PrefixLength;
+            var adapterName = ethernetAdapters[0].Name;
+            var errorMesage =
+                $"More than one IPv4 address is associated with {adapterName}, unable to determine CIDR IP";
+
+            return Result.Fail<string>(errorMesage);
+
+        }
+
+        static List<NetworkInterface> GetUnixNetworkInterfaceList()
+        {
+            return NetworkInterface.GetAllNetworkInterfaces().Select(a => a)
+                .Where(a => a.Name.StartsWith("en", StringComparison.Ordinal)).ToList();
+        }
+
+        static List<NetworkInterface> GetWindowsNetworkInterfaceList()
+        {
+            return NetworkInterface.GetAllNetworkInterfaces().Select(a => a)
+                .Where(a => a.Name.Contains("ethernet", StringComparison.OrdinalIgnoreCase) ||
+                            a.Description.Contains("ethernet", StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        static string GetCidrIpFromIpAddressInformation(UnicastIPAddressInformation ipInfo)
+        {
+            var ipAddressBytes = ipInfo.Address.GetAddressBytes();
+            var networkBitCount = ipInfo.PrefixLength;
             var networkIdBytes = new byte[4];
 
             foreach (var i in Enumerable.Range(0, ipAddressBytes.Length))
@@ -344,9 +371,7 @@
             }
 
             var networkId = new IPAddress(networkIdBytes);
-            var cidrIp = $"{networkId}/{networkBitCount}";
-
-            return Result.Ok(cidrIp);
+            return $"{networkId}/{networkBitCount}";
         }
 
         public static Result<string> ConvertIpAddressToBinary(string ip)
