@@ -26,9 +26,9 @@
             return !NetworkUtilities.IpAddressIsInPrivateAddressSpace(ip);
         }
 
-        public static string ConvertToBinaryString(this IPAddress ip)
+        public static string ConvertToBinaryString(this IPAddress ip, bool separateBytes)
         {
-            return NetworkUtilities.ConvertIpAddressToBinary(ip);
+            return NetworkUtilities.ConvertIpAddressToBinary(ip, separateBytes);
         }
     }
 }
