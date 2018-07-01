@@ -29,6 +29,25 @@
             return menuItems[userSelection - 1];
         }
 
+        public static void DisplayTieredMenu(TieredMenu tieredMenu)
+        {
+            var itemCount = 1;
+            
+            foreach (var i in Enumerable.Range(0, tieredMenu.Tiers.Count))
+            {
+                if (tieredMenu.Tiers[i].MenuItems.Count == 0) continue;
+                
+                Console.WriteLine($"{tieredMenu.Tiers[i].TierLabel}{Environment.NewLine}");
+                foreach (var j in Enumerable.Range(0, tieredMenu.Tiers[i].MenuItems.Count))
+                {
+                    Console.WriteLine($"{itemCount}. {tieredMenu.Tiers[i].MenuItems[j].ItemText}");
+                    itemCount++;
+                }
+
+                Console.WriteLine(Environment.NewLine);
+            }
+        }
+
         public static void DisplayMenu(string menuText, List<IMenuItem> menuItems)
         {
             Console.WriteLine($"{menuText}{Environment.NewLine}");
