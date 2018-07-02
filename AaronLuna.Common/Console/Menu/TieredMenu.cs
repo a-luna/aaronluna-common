@@ -26,7 +26,7 @@
             Tiers.Clear();
             _menuItems.Clear();
         }
-        
+
         public IMenuItem GetMenuItem(int index)
         {
             if (_menuItems.Count == 0) return null;

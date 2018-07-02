@@ -96,7 +96,7 @@ namespace AaronLuna.Common.IO
 
             return Result.Ok(count);
         }
-        
+
         public static string FileSizeToString(long fileSizeInBytes)
         {
             if (fileSizeInBytes > OneGb)
