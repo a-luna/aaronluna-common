@@ -37,7 +37,11 @@
             {
                 if (tieredMenu.Tiers[i].MenuItems.Count == 0) continue;
 
-                Console.WriteLine($"{tieredMenu.Tiers[i].TierLabel}{Environment.NewLine}");
+                if (!string.IsNullOrEmpty(tieredMenu.Tiers[i].TierLabel))
+                {
+                    Console.WriteLine($"{tieredMenu.Tiers[i].TierLabel}{Environment.NewLine}");
+                }
+                
                 foreach (var j in Enumerable.Range(0, tieredMenu.Tiers[i].MenuItems.Count))
                 {
                     Console.WriteLine($"{itemCount}. {tieredMenu.Tiers[i].MenuItems[j].ItemText}");
