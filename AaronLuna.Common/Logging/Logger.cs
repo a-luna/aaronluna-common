@@ -1,4 +1,6 @@
-﻿namespace AaronLuna.Common.Logging
+﻿using AaronLuna.Common.Extensions;
+
+namespace AaronLuna.Common.Logging
 {
     using System;
     using System.IO;
@@ -83,7 +85,7 @@
             if (!CheckListening()) return;
             if (ex != null)
             {
-                message += $"\r\n{ex.Message}\r\n{ex.StackTrace}";
+                message += ex.GetReport();
             }
 
             var info = new LogMessageInfo(level, Name, message);
