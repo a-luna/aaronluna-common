@@ -18,7 +18,7 @@
 
             // Create a task that completes when either the async operation completes,
             // or cancellation is requested.
-            var readyTask = await Task.WhenAny(asyncTask, cancellationTask);
+            var readyTask = await Task.WhenAny(asyncTask, cancellationTask).ConfigureAwait(false);
 
             // In case of cancellation, register a continuation to observe any unhandled 
             // exceptions from the asynchronous operation (once it completes).

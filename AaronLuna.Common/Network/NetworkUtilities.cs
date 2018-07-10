@@ -31,7 +31,7 @@
             Result<string> getUrlResult;
 
             var getUrlTask = Task.Run(() => HttpHelper.GetUrlContentAsStringAsync("http://ipv4.icanhazip.com/"));
-            if (getUrlTask == await Task.WhenAny(getUrlTask, Task.Delay(3000)))
+            if (getUrlTask == await Task.WhenAny(getUrlTask, Task.Delay(3000)).ConfigureAwait(false))
             {
                 getUrlResult = await getUrlTask;
             }
@@ -200,7 +200,7 @@
             var cidrIpParseError = $"Unable to parse IP address from input string {cidrIp}";
             var cidrIpSplitError = $"cidrIp was not in the correct format:\nExpected: a.b.c.d/n\nActual: {cidrIp}";
             var cidrMaskParseError1 = $"Unable to parse netmask bit count from {cidrIp}";
-            var cidrMaskParseError2 = $"Netmask bit count value is invalid, must be in range 0-32";
+            const string cidrMaskParseError2 = "Netmask bit count value is invalid, must be in range 0-32";
 
             if (string.IsNullOrEmpty(cidrIp))
             {
@@ -300,7 +300,6 @@
                     Console.WriteLine($"    Transient...................: {uni.IsTransient}");
                 }
                 Console.WriteLine();
-
             }
         }
 
@@ -329,7 +328,6 @@
             return platform.Contains("win", StringComparison.OrdinalIgnoreCase)
                 ? GetCidrIpFromWindowsIpAddressInformation(ipAddressInfoList[0])
                 : GetCidrIpFromUnixIpAddressInformation(ipAddressInfoList[0]);
-
         }
 
         static List<UnicastIPAddressInformation> GetUnixUnicastAddressInfoList()
@@ -354,8 +352,8 @@
         static List<UnicastIPAddressInformation> GetWindowsUnicastAddressInfoList()
         {
             var ethernetAdapters = NetworkInterface.GetAllNetworkInterfaces().Select(nic => nic)
-                .Where(nic => nic.Name.Contains("ethernet", StringComparison.OrdinalIgnoreCase) ||
-                              nic.Description.Contains("ethernet", StringComparison.OrdinalIgnoreCase)).ToList();
+                .Where(nic => nic.Name.Contains("ethernet", StringComparison.OrdinalIgnoreCase)
+                              || nic.Description.Contains("ethernet", StringComparison.OrdinalIgnoreCase)).ToList();
 
             var ipV4List = new List<UnicastIPAddressInformation>();
             foreach (var nic in ethernetAdapters)

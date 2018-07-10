@@ -32,13 +32,13 @@ namespace AaronLuna.Common.Extensions
 
             if (ex.InnerException != null)
             {
-                errorMessage += 
+                errorMessage +=
                     Environment.NewLine + Environment.NewLine +
                     $"\tInner Exception: {Environment.NewLine}\t{ex.InnerException.Message}";
             }
 
-            errorMessage += 
-                Environment.NewLine + Environment.NewLine + 
+            errorMessage +=
+                Environment.NewLine + Environment.NewLine +
                 $"\tStack Trace: {Environment.NewLine}\t{ex.StackTrace}";
 
             return errorMessage;

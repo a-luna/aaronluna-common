@@ -10,7 +10,7 @@
 
     public static class ConsoleUtilities
     {
-        static readonly string charIndices =
+        const string CharIndices =
             "0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9 _ 0 1 2 3 4 5 6 7 8 9";
 
         public static void WriteCharSetToConsole(Encoding outputEncoding, int charCount)
@@ -19,7 +19,7 @@
             var charIndex = 0;
 
             Console.WriteLine($"{Environment.NewLine}({charIndex})");
-            Console.WriteLine(charIndices);
+            Console.WriteLine(CharIndices);
 
             if (charCount < 50)
             {
@@ -33,7 +33,7 @@
             if (excessChars > 0)
             {
                 Console.WriteLine($"{Environment.NewLine}({charIndex + 1})");
-                Console.WriteLine(charIndices);
+                Console.WriteLine(CharIndices);
 
                 PrintLessThanFiftyChars(charIndex, excessChars);
             }
@@ -84,7 +84,7 @@
                 if (i.IsLastIteration(totalLoops)) break;
 
                 Console.WriteLine($"{Environment.NewLine}({charIndex + 1})");
-                Console.WriteLine(charIndices);
+                Console.WriteLine(CharIndices);
             }
 
             return charIndex;
