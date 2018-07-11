@@ -303,7 +303,7 @@
             }
         }
 
-        public static Result<string> AttemptToDetermineLanCidrIp()
+        public static Result<string> GetCidrIp()
         {
             var platform = Environment.OSVersion.Platform.ToString();
 
