@@ -3,6 +3,6 @@
     public interface ITieredMenu : IMenuItem
     {
         string MenuText { get; set; }
-        TieredMenu Menu { get; set; }
+        TieredMenu TieredMenu { get; set; }
     }
 }

@@ -4,6 +4,12 @@
 
     public class MenuTier
     {
+        public MenuTier(string tierLabel)
+        {
+            TierLabel = tierLabel;
+            MenuItems = new List<IMenuItem>();
+        }
+
         public string TierLabel { get; set; }
         public List<IMenuItem> MenuItems {get; set; }
     }
