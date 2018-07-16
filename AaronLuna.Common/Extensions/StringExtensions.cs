@@ -79,7 +79,7 @@
             var oct5 = input.Substring(8, 2);
             var oct6 = input.Substring(10, 2);
 
-            return oct1 + ":" + oct2 + ":" + oct3 + ":" + oct4 + ":" + oct5 + ":" + oct6;
+            return $"{oct1}:{oct2}:{oct3}:{oct4}:{oct5}:{oct6}";
         }
 
         public static bool HexStringRepresentsNegativeNumber(this string hexString)
