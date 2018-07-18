@@ -59,23 +59,12 @@
 
             if (milliseconds <= 0)
             {
-                s += "\u00a0\u00a00ms";
+                s += "0ms";
             }
 
             if (milliseconds > 0)
             {
-                if (milliseconds < 100)
-                {
-                    s += $"\u00a0{milliseconds}ms";
-                }
-                else if (milliseconds < 10)
-                {
-                    s += $"\u00a0\u00a0{milliseconds}ms";
-                }
-                else
-                {
-                    s += $"{milliseconds}ms";
-                }
+                s += $"{milliseconds}ms";
             }
 
             return s.TrimStart();
