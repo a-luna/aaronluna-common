@@ -269,40 +269,6 @@
                 : AddressType.Public;
         }
 
-        public static void DisplayLocalIPv4AddressInfo()
-        {
-            var platform = Environment.OSVersion.Platform.ToString();
-
-            foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                var adapterProperties = adapter.GetIPProperties();
-
-                var uniCast =
-                    adapterProperties.UnicastAddresses
-                        .Select(uni => uni)
-                        .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
-
-                if (uniCast.Count == 0) continue;
-
-                Console.WriteLine($"Adapter Name....................: {adapter.Name}");
-                Console.WriteLine($"Description.....................: {adapter.Description}");
-                foreach (var uni in uniCast)
-                {
-                    Console.WriteLine($"  Unicast Address...............: {uni.Address}");
-                    Console.WriteLine($"    IPv4 Mask...................: {uni.IPv4Mask}");
-                    if (!platform.Contains("win", StringComparison.OrdinalIgnoreCase)) continue;
-
-                    Console.WriteLine($"    Prefix Length...............: {uni.PrefixLength}");
-                    Console.WriteLine($"    Prefix Origin...............: {uni.PrefixOrigin}");
-                    Console.WriteLine($"    Suffix Origin...............: {uni.SuffixOrigin}");
-                    Console.WriteLine($"    Duplicate Address Detection : {uni.DuplicateAddressDetectionState}");
-                    Console.WriteLine($"    DNS Eligible................: {uni.IsDnsEligible}");
-                    Console.WriteLine($"    Transient...................: {uni.IsTransient}");
-                }
-                Console.WriteLine();
-            }
-        }
-
         public static Result<string> GetCidrIp()
         {
             var platform = Environment.OSVersion.Platform.ToString();
@@ -328,6 +294,161 @@
             return platform.Contains("win", StringComparison.OrdinalIgnoreCase)
                 ? GetCidrIpFromWindowsIpAddressInformation(ipAddressInfoList[0])
                 : GetCidrIpFromUnixIpAddressInformation(ipAddressInfoList[0]);
+        }
+
+        public static void DisplayLocalIPv4AddressInfo()
+        {
+            var platform = Environment.OSVersion.Platform.ToString();
+
+            foreach (var adapter in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                var adapterProperties = adapter.GetIPProperties();
+
+                var uniCast =
+                    adapterProperties.UnicastAddresses
+                        .Select(uni => uni)
+                        .Where(uni => uni.Address.AddressFamily == AddressFamily.InterNetwork).ToList();
+
+                if (uniCast.Count == 0) continue;
+
+                Console.WriteLine($"Adapter Name.....................: {adapter.Name}");
+                Console.WriteLine($"Description......................: {adapter.Description}");
+                foreach (var uni in uniCast)
+                {
+                    Console.WriteLine($"  Unicast Address................: {uni.Address}");
+                    Console.WriteLine($"    IPv4 Mask....................: {uni.IPv4Mask}");
+
+                    if (!platform.Contains("win", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    Console.WriteLine($"    Prefix Length................: {uni.PrefixLength}");
+                    Console.WriteLine($"    Prefix Origin................: {uni.PrefixOrigin}");
+                    Console.WriteLine($"    Suffix Origin................: {uni.SuffixOrigin}");
+                    Console.WriteLine($"    Duplicate Address Detection..: {uni.DuplicateAddressDetectionState}");
+                    Console.WriteLine($"    DNS Eligible.................: {uni.IsDnsEligible}");
+                    Console.WriteLine($"    Transient....................: {uni.IsTransient}");
+                }
+                Console.WriteLine();
+            }
+        }
+
+        public static void DisplayIPv4GlobalStatistics()
+        {
+            IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
+            IPGlobalStatistics ipstat = properties.GetIPv4GlobalStatistics();
+
+            Console.WriteLine("  Forwarding enabled ...................... : {0}",
+                ipstat.ForwardingEnabled);
+            Console.WriteLine("  Interfaces .............................. : {0}",
+                ipstat.NumberOfInterfaces);
+            Console.WriteLine("  IP addresses ............................ : {0}",
+                ipstat.NumberOfIPAddresses);
+            Console.WriteLine("  Routes .................................. : {0}",
+                ipstat.NumberOfRoutes);
+            Console.WriteLine("  Default TTL ............................. : {0}",
+                ipstat.DefaultTtl);
+            Console.WriteLine("");
+            Console.WriteLine("  Inbound Packet Data:");
+            Console.WriteLine("      Received ............................ : {0}",
+                ipstat.ReceivedPackets);
+            Console.WriteLine("      Forwarded ........................... : {0}",
+                ipstat.ReceivedPacketsForwarded);
+            Console.WriteLine("      Delivered ........................... : {0}",
+                ipstat.ReceivedPacketsDelivered);
+            Console.WriteLine("      Discarded ........................... : {0}",
+                ipstat.ReceivedPacketsDiscarded);
+            Console.WriteLine("      Header Errors ....................... : {0}",
+                ipstat.ReceivedPacketsWithHeadersErrors);
+            Console.WriteLine("      Address Errors ...................... : {0}",
+                ipstat.ReceivedPacketsWithAddressErrors);
+            Console.WriteLine("      Unknown Protocol Errors ............. : {0}",
+                ipstat.ReceivedPacketsWithUnknownProtocol);
+            Console.WriteLine("");
+            Console.WriteLine("  Outbound Packet Data:");
+            Console.WriteLine("      Requested ........................... : {0}",
+                 ipstat.OutputPacketRequests);
+            Console.WriteLine("      Discarded ........................... : {0}",
+                ipstat.OutputPacketsDiscarded);
+            Console.WriteLine("      No Routing Discards ................. : {0}",
+                ipstat.OutputPacketsWithNoRoute);
+            Console.WriteLine("      Routing Entry Discards .............. : {0}",
+                ipstat.OutputPacketRoutingDiscards);
+            Console.WriteLine("");
+            Console.WriteLine("  Reassembly Data:");
+            Console.WriteLine("      Reassembly Timeout .................. : {0}",
+                ipstat.PacketReassemblyTimeout);
+            Console.WriteLine("      Reassemblies Required ............... : {0}",
+                ipstat.PacketReassembliesRequired);
+            Console.WriteLine("      Packets Reassembled ................. : {0}",
+                ipstat.PacketsReassembled);
+            Console.WriteLine("      Packets Fragmented .................. : {0}",
+                ipstat.PacketsFragmented);
+            Console.WriteLine("      Fragment Failures ................... : {0}",
+                ipstat.PacketFragmentFailures);
+            Console.WriteLine("");
+        }
+
+        public static void DisplayIPv4TcpStatistics()
+        {
+            var properties = IPGlobalProperties.GetIPGlobalProperties();
+            var tcpstat = properties.GetTcpIPv4Statistics();
+
+            Console.WriteLine($"  Minimum Transmission Timeout..: {tcpstat.MinimumTransmissionTimeout}");
+            Console.WriteLine($"  Maximum Transmission Timeout..: {tcpstat.MaximumTransmissionTimeout}");
+
+            Console.WriteLine($"{Environment.NewLine}  Connection Data:");
+            Console.WriteLine($"      Current...................: {tcpstat.CurrentConnections}");
+            Console.WriteLine($"      Cumulative................: {tcpstat.CumulativeConnections}");
+            Console.WriteLine($"      Initiated.................: {tcpstat.ConnectionsInitiated}");
+            Console.WriteLine($"      Accepted..................: {tcpstat.ConnectionsAccepted}");
+            Console.WriteLine($"      Failed Attempts...........: {tcpstat.FailedConnectionAttempts}");
+            Console.WriteLine($"      Reset.....................: {tcpstat.ResetConnections}");
+            
+            Console.WriteLine($"{Environment.NewLine}  Segment Data:");
+            Console.WriteLine($"      Received..................: {tcpstat.SegmentsReceived}");
+            Console.WriteLine($"      Sent......................: {tcpstat.SegmentsSent}");
+            Console.WriteLine($"      Retransmitted.............: {tcpstat.SegmentsResent}");
+        }
+
+        public static void DisplayIcmpV4Statistics()
+        {
+            IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
+            IcmpV4Statistics stat = properties.GetIcmpV4Statistics();
+
+            Console.WriteLine("  Messages ............................ Sent: {0,-10}   Received: {1,-10}",
+                stat.MessagesSent, stat.MessagesReceived);
+            Console.WriteLine("  Errors .............................. Sent: {0,-10}   Received: {1,-10}",
+                stat.ErrorsSent, stat.ErrorsReceived);
+
+            Console.WriteLine("  Echo Requests ....................... Sent: {0,-10}   Received: {1,-10}",
+                stat.EchoRequestsSent, stat.EchoRequestsReceived);
+            Console.WriteLine("  Echo Replies ........................ Sent: {0,-10}   Received: {1,-10}",
+                stat.EchoRepliesSent, stat.EchoRepliesReceived);
+
+            Console.WriteLine("  Destination Unreachables ............ Sent: {0,-10}   Received: {1,-10}",
+                stat.DestinationUnreachableMessagesSent, stat.DestinationUnreachableMessagesReceived);
+
+            Console.WriteLine("  Source Quenches ..................... Sent: {0,-10}   Received: {1,-10}",
+                stat.SourceQuenchesSent, stat.SourceQuenchesReceived);
+
+            Console.WriteLine("  Redirects ........................... Sent: {0,-10}   Received: {1,-10}",
+                stat.RedirectsSent, stat.RedirectsReceived);
+
+            Console.WriteLine("  TimeExceeded ........................ Sent: {0,-10}   Received: {1,-10}",
+                stat.TimeExceededMessagesSent, stat.TimeExceededMessagesReceived);
+
+            Console.WriteLine("  Parameter Problems .................. Sent: {0,-10}   Received: {1,-10}",
+                stat.ParameterProblemsSent, stat.ParameterProblemsReceived);
+
+            Console.WriteLine("  Timestamp Requests .................. Sent: {0,-10}   Received: {1,-10}",
+                stat.TimestampRequestsSent, stat.TimestampRequestsReceived);
+            Console.WriteLine("  Timestamp Replies ................... Sent: {0,-10}   Received: {1,-10}",
+                stat.TimestampRepliesSent, stat.TimestampRepliesReceived);
+
+            Console.WriteLine("  Address Mask Requests ............... Sent: {0,-10}   Received: {1,-10}",
+                stat.AddressMaskRequestsSent, stat.AddressMaskRequestsReceived);
+            Console.WriteLine("  Address Mask Replies ................ Sent: {0,-10}   Received: {1,-10}",
+                stat.AddressMaskRepliesSent, stat.AddressMaskRepliesReceived);
+            Console.WriteLine("");
         }
 
         static List<UnicastIPAddressInformation> GetUnixUnicastAddressInfoList()

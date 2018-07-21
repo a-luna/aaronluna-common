@@ -9,9 +9,9 @@ namespace AaronLuna.Common.IO
 
     public static class FileHelper
     {
-        public const double OneKb = 1024;
-        public const double OneMb = 1024 * 1024;
-        public const double OneGb = 1024 * 1024 * 1024;
+        public const double OneKB = 1024;
+        public const double OneMB = 1024 * 1024;
+        public const double OneGB = 1024 * 1024 * 1024;
 
         static readonly object File = new object();
 
@@ -99,18 +99,18 @@ namespace AaronLuna.Common.IO
 
         public static string FileSizeToString(long fileSizeInBytes)
         {
-            if (fileSizeInBytes > OneGb)
+            if (fileSizeInBytes > OneGB)
             {
-                return $"{fileSizeInBytes / OneGb:F2} GB";
+                return $"{fileSizeInBytes / OneGB:F2} GB";
             }
 
-            if (fileSizeInBytes > OneMb)
+            if (fileSizeInBytes > OneMB)
             {
-                return $"{fileSizeInBytes / OneMb:F2} MB";
+                return $"{fileSizeInBytes / OneMB:F2} MB";
             }
 
-            return fileSizeInBytes > OneKb
-                ? $"{fileSizeInBytes / OneKb:F2} KB"
+            return fileSizeInBytes > OneKB
+                ? $"{fileSizeInBytes / OneKB:F2} KB"
                 : $"{fileSizeInBytes} bytes";
         }
     }
