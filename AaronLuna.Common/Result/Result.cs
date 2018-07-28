@@ -14,6 +14,15 @@
 
         public bool Failure => !Success;
 
+        public override string ToString()
+        {
+            var result = Success
+                ? "Success"
+                : "Failure";
+
+            return $"[{result}] {Error}";
+        }
+
         public static Result Fail(string message)
         {
             return new Result(false, message);
@@ -57,5 +66,14 @@
         }
 
         public T Value { get; }
+
+        public override string ToString()
+        {
+            var result = Success
+                ? "Success"
+                : "Failure";
+
+            return $"[{result}] {Error}";
+        }
     }
 }
