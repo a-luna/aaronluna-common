@@ -26,6 +26,35 @@
             Public
         }
 
+        public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync(int maxAttempts)
+        {
+            var attemptCounter = 1;
+            var getPublicIpSucceeded = false;
+            var publicIp = IPAddress.None;
+
+            while (!getPublicIpSucceeded && attemptCounter <= maxAttempts)
+            {
+                var getPublicIpResult = await GetPublicIPv4AddressAsync().ConfigureAwait(false);
+                if (getPublicIpResult.Success)
+                {
+                    publicIp = getPublicIpResult.Value;
+                }
+
+                if (publicIp.IsEqualTo(IPAddress.None))
+                {
+                    attemptCounter++;
+                    continue;
+                }
+
+                getPublicIpSucceeded = true;
+            }
+
+            return getPublicIpSucceeded
+                ? Result.Ok(publicIp)
+                : Result.Fail<IPAddress>(
+                    $"Unable to determine public IP address after {maxAttempts} unsuccessful attempts");
+        }
+
         public static async Task<Result<IPAddress>> GetPublicIPv4AddressAsync()
         {
             Result<string> getUrlResult;

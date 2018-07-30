@@ -7,7 +7,8 @@ namespace AaronLuna.Common.Extensions
         public static string GetReport(this Exception ex)
         {
             var errorMessage =
-                $"{ex.GetType()} encountered!{Environment.NewLine}{Environment.NewLine}" +
+                $"{Environment.NewLine}{ex.GetType()} encountered!" +
+                Environment.NewLine + Environment.NewLine +
                 $"Error Message: {Environment.NewLine}{ex.Message}";
 
             if (ex.InnerException != null)
