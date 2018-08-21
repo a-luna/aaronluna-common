@@ -25,8 +25,8 @@
             }
 
             // ReSharper disable once ExceptionNotDocumentedOptional
-            // "style" parameter in TryParse call is hardcoded to a valid NumberStyles 
-            // value, thus there is no reason to check for the conditions that would 
+            // "style" parameter in TryParse call is hardcoded to a valid NumberStyles
+            // value, thus there is no reason to check for the conditions that would
             // throw an ArgumentException.
             if (long.TryParse(_hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var signedInt64))
             {
@@ -55,11 +55,11 @@
             // string is not prefixed with a negative sign.
             //
             // The input string has been checked against null at the beginning of this
-            // method, so the StartsWith() method call below will not throw an 
+            // method, so the StartsWith() method call below will not throw an
             // ArgumentNullException.
             //
             // "StringComparison" paremeter in the StartsWith() method call is
-            // hardcoded to a valid StringComparison value, so there is no need to 
+            // hardcoded to a valid StringComparison value, so there is no need to
             // check for the condition that would throw an ArgumentException.
             if (_hexString.StartsWith("-", StringComparison.InvariantCulture))
             {
@@ -104,8 +104,8 @@
             }
 
             // ReSharper disable once ExceptionNotDocumentedOptional
-            // "style" parameter in TryParse call is hardcoded to a valid NumberStyles 
-            // value, thus there is no reason to check for the conditions that would 
+            // "style" parameter in TryParse call is hardcoded to a valid NumberStyles
+            // value, thus there is no reason to check for the conditions that would
             // throw an ArgumentException.
             if (ulong.TryParse(_hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var unsignedInt64))
             {
@@ -135,11 +135,11 @@
             // string is not prefixed with a negative sign.
             //
             // The input string has been checked against null at the beginning of this
-            // method, so the StartsWith() method call below will not throw an 
+            // method, so the StartsWith() method call below will not throw an
             // ArgumentNullException.
             //
             // "StringComparison" paremeter in the StartsWith() method call is
-            // hardcoded to a valid StringComparison value, so there is no need to 
+            // hardcoded to a valid StringComparison value, so there is no need to
             // check for the condition that would throw an ArgumentException.
             if (_hexString.StartsWith("-", StringComparison.InvariantCulture))
             {

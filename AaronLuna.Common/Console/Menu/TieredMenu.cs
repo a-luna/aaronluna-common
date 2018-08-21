@@ -12,7 +12,7 @@
             _menuItems = new List<IMenuItem>();
             _tiers = new List<MenuTier>();
         }
-        
+
         public int ItemCount => _menuItems.Count;
         public int TierCount => _tiers.Count;
 

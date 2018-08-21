@@ -431,7 +431,7 @@
             Console.WriteLine($"      Accepted..................: {tcpstat.ConnectionsAccepted}");
             Console.WriteLine($"      Failed Attempts...........: {tcpstat.FailedConnectionAttempts}");
             Console.WriteLine($"      Reset.....................: {tcpstat.ResetConnections}");
-            
+
             Console.WriteLine($"{Environment.NewLine}  Segment Data:");
             Console.WriteLine($"      Received..................: {tcpstat.SegmentsReceived}");
             Console.WriteLine($"      Sent......................: {tcpstat.SegmentsSent}");

@@ -32,7 +32,7 @@ namespace AaronLuna.Common.Console.Menu
                 {
                     Console.WriteLine(thisTierLabel + Environment.NewLine);
                 }
-                
+
                 foreach (var j in Enumerable.Range(0, menuItemCountThisTier))
                 {
                     var newLineOnLastMenuItem = j.IsLastIteration(menuItemCountThisTier)
